@@ -321,8 +321,13 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const placeOrder = (): Order | null => {
     if (!currentRestaurant || cartItems.length === 0) return null;
     const total = cartItems.reduce((acc, curr) => acc + (curr.menuItem.price * curr.quantity), 0);
+
+    const existingRestoOrders = orders.filter(o => o.restaurantId === currentRestaurant.id);
+    const orderSeq = 101 + existingRestoOrders.length;
+    const generatedOrderId = `T${activeTableNumber}-${orderSeq}`;
+
     const newOrder: Order = {
-      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: generatedOrderId,
       restaurantId: currentRestaurant.id,
       tableNumber: activeTableNumber,
       items: [...cartItems],
