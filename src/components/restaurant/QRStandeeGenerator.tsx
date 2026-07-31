@@ -5,10 +5,10 @@ import { Printer, QrCode, Eye, Utensils, Smartphone } from 'lucide-react';
 
 export const QRStandeeGenerator: React.FC = () => {
   const { currentRestaurant, activeTableNumber, setActiveTableNumber } = useSaaS();
-  const [standeeColor, setStandeeColor] = useState<string>(currentRestaurant.themeColor || '#ff5722');
+  const [standeeColor, setStandeeColor] = useState<string>(currentRestaurant?.themeColor || '#ff5722');
   const standeeRef = useRef<HTMLDivElement>(null);
 
-  const menuUrl = `${window.location.origin}/?restaurant=${currentRestaurant.slug}&table=${activeTableNumber}`;
+  const menuUrl = `${window.location.origin}/?restaurant=${currentRestaurant?.slug || ''}&table=${activeTableNumber}`;
 
   const handlePrint = () => {
     window.print();
@@ -66,7 +66,7 @@ export const QRStandeeGenerator: React.FC = () => {
                 fontWeight: '700'
               }}
             >
-              {Array.from({ length: currentRestaurant.tablesCount || 25 }, (_, i) => i + 1).map((num) => (
+              {Array.from({ length: currentRestaurant?.tablesCount || 25 }, (_, i) => i + 1).map((num) => (
                 <option key={num} value={num}>
                   Table {num}
                 </option>

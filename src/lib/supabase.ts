@@ -37,7 +37,7 @@ export const playKitchenOrderChime = () => {
   }
 };
 
-// Supabase DB Helpers
+// Supabase DB Fetch Helpers
 export async function fetchTenantsDB(): Promise<Restaurant[]> {
   if (!supabase) return [];
   const { data, error } = await supabase.from('tenants').select('*');
@@ -124,6 +124,54 @@ export async function fetchOrdersDB(): Promise<Order[]> {
     customerName: o.customer_name,
     createdAt: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }));
+}
+
+// Supabase DB Mutation Helpers
+export async function createTenantDB(r: Restaurant) {
+  if (!supabase) return;
+  await supabase.from('tenants').insert({
+    name: r.name,
+    slug: r.slug,
+    logo: r.logo,
+    banner_image: r.bannerImage,
+    tagline: r.tagline,
+    address: r.address,
+    phone: r.phone,
+    whatsapp: r.whatsapp,
+    currency: r.currency,
+    theme_color: r.themeColor,
+    plan_id: r.planId,
+    status: r.status,
+    tables_count: r.tablesCount
+  });
+}
+
+export async function updateTenantStatusDB(tenantId: string, status: Restaurant['status']) {
+  if (!supabase) return;
+  await supabase.from('tenants').update({ status }).eq('id', tenantId);
+}
+
+export async function createCategoryDB(c: Category) {
+  if (!supabase) return;
+  await supabase.from('categories').insert({
+    tenant_id: c.restaurantId,
+    name: c.name
+  });
+}
+
+export async function createMenuItemDB(m: MenuItem) {
+  if (!supabase) return;
+  await supabase.from('menu_items').insert({
+    tenant_id: m.restaurantId,
+    category_id: m.categoryId,
+    name: m.name,
+    description: m.description,
+    price: m.price,
+    image: m.image,
+    tags: m.tags,
+    is_veg: m.isVeg,
+    is_available: m.isAvailable
+  });
 }
 
 export async function createOrderDB(order: Order) {

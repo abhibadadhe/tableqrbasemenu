@@ -10,7 +10,11 @@ import {
   fetchCategoriesDB,
   fetchOffersDB,
   fetchOrdersDB,
-  createOrderDB
+  createOrderDB,
+  createTenantDB,
+  createCategoryDB,
+  createMenuItemDB,
+  updateTenantStatusDB
 } from '../lib/supabase';
 
 interface SaaSContextType {
@@ -42,7 +46,7 @@ interface SaaSContextType {
   orders: Order[];
 
   // Derived Active State
-  currentRestaurant: Restaurant;
+  currentRestaurant: Restaurant | undefined;
   currentCategories: Category[];
   currentMenuItems: MenuItem[];
   currentOffers: OfferBanner[];
@@ -78,7 +82,7 @@ const SaaSContext = createContext<SaaSContextType | undefined>(undefined);
 
 export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentRole, setCurrentRole] = useState<RoleMode>('landing');
-  const [activeRestaurantId, setActiveRestaurantId] = useState<string>('rest-bistro-1');
+  const [activeRestaurantId, setActiveRestaurantId] = useState<string>('');
   const [activeTableNumber, setActiveTableNumber] = useState<number>(12);
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
@@ -118,7 +122,12 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginRestaurant = (restId: string, phone: string, pin: string): boolean => {
-    const targetRest = restaurants.find(r => r.id === restId || r.slug === restId);
+    const targetRest = restaurants.find(r => 
+      r.id === restId || 
+      r.slug === restId || 
+      r.slug.toLowerCase() === restId.toLowerCase() ||
+      r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === restId.toLowerCase()
+    );
     const cleanPhone = phone.replace(/[^0-9]/g, '');
     const restPhone = targetRest ? targetRest.phone.replace(/[^0-9]/g, '') : '';
 
@@ -151,7 +160,6 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else if (roleParam === 'restaurant' || path.includes('/login')) {
       setCurrentRole('restaurant');
       if (idParam) setActiveRestaurantId(idParam);
-      // Attempt slug extraction from path e.g. /cafe-11-11/login
       const parts = path.split('/').filter(Boolean);
       if (parts.length >= 2 && parts[1] === 'login') {
         setActiveRestaurantId(parts[0]);
@@ -178,10 +186,18 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (dbTenants.length > 0) {
           setRestaurants(dbTenants);
           const params = new URLSearchParams(window.location.search);
-          const idParam = params.get('id') || params.get('restaurant');
-          if (idParam) {
-            const found = dbTenants.find(t => t.id === idParam || t.slug === idParam);
+          const targetParam = params.get('id') || params.get('restaurant');
+          if (targetParam) {
+            const found = dbTenants.find(t => 
+              t.id === targetParam || 
+              t.slug === targetParam || 
+              t.slug.toLowerCase() === targetParam.toLowerCase() ||
+              t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === targetParam.toLowerCase()
+            );
             if (found) setActiveRestaurantId(found.id);
+            else setActiveRestaurantId(targetParam);
+          } else {
+            setActiveRestaurantId(dbTenants[0].id);
           }
         }
         if (dbMenuItems.length > 0) setMenuItems(dbMenuItems);
@@ -221,11 +237,17 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Match restaurant by ID or Slug
-  const currentRestaurant = restaurants.find(r => r.id === activeRestaurantId || r.slug === activeRestaurantId) || restaurants[0];
-  const currentCategories = categories.filter(c => c.restaurantId === currentRestaurant.id);
-  const currentMenuItems = menuItems.filter(m => m.restaurantId === currentRestaurant.id);
-  const currentOffers = offers.filter(o => o.restaurantId === currentRestaurant.id);
+  // Robust Restaurant Matching by ID, Slug, or Normalized Name
+  const currentRestaurant = restaurants.find(r => 
+    r.id === activeRestaurantId || 
+    r.slug === activeRestaurantId || 
+    r.slug.toLowerCase() === activeRestaurantId.toLowerCase() ||
+    r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === activeRestaurantId.toLowerCase()
+  ) || restaurants[0];
+
+  const currentCategories = currentRestaurant ? categories.filter(c => c.restaurantId === currentRestaurant.id) : [];
+  const currentMenuItems = currentRestaurant ? menuItems.filter(m => m.restaurantId === currentRestaurant.id) : [];
+  const currentOffers = currentRestaurant ? offers.filter(o => o.restaurantId === currentRestaurant.id) : [];
 
   // Cart Functions
   const addToCart = (item: MenuItem, customNotes?: string) => {
@@ -256,7 +278,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCart = () => setCartItems([]);
 
   const placeOrder = (): Order | null => {
-    if (cartItems.length === 0) return null;
+    if (!currentRestaurant || cartItems.length === 0) return null;
     const total = cartItems.reduce((acc, curr) => acc + (curr.menuItem.price * curr.quantity), 0);
     const newOrder: Order = {
       id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -291,12 +313,14 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Restaurant Actions
   const addMenuItem = (item: Omit<MenuItem, 'id' | 'restaurantId'>) => {
+    if (!currentRestaurant) return;
     const newItem: MenuItem = {
       ...item,
       id: `item-${Date.now()}`,
       restaurantId: currentRestaurant.id
     };
     setMenuItems(prev => [...prev, newItem]);
+    if (isSupabaseConfigured) createMenuItemDB(newItem);
     showToast(`Added "${newItem.name}" to menu.`);
   };
 
@@ -315,12 +339,14 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addCategory = (name: string) => {
+    if (!currentRestaurant) return;
     const newCat: Category = {
       id: `cat-${Date.now()}`,
       restaurantId: currentRestaurant.id,
       name
     };
     setCategories(prev => [...prev, newCat]);
+    if (isSupabaseConfigured) createCategoryDB(newCat);
     showToast(`Category "${name}" created.`);
   };
 
@@ -330,6 +356,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateRestaurantSettings = (updated: Partial<Restaurant>) => {
+    if (!currentRestaurant) return;
     setRestaurants(prev => prev.map(r => r.id === currentRestaurant.id ? { ...r, ...updated } : r));
     showToast('Restaurant settings updated!');
   };
@@ -344,11 +371,13 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString().split('T')[0]
     };
     setRestaurants(prev => [...prev, created]);
-    showToast(`New tenant "${created.name}" onboarded!`);
+    if (isSupabaseConfigured) createTenantDB(created);
+    showToast(`New tenant "${created.name}" onboarded to Supabase DB!`);
   };
 
   const updateTenantStatus = (restaurantId: string, status: Restaurant['status']) => {
     setRestaurants(prev => prev.map(r => r.id === restaurantId ? { ...r, status } : r));
+    if (isSupabaseConfigured) updateTenantStatusDB(restaurantId, status);
     showToast(`Tenant status set to ${status}`);
   };
 
