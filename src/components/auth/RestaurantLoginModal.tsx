@@ -15,14 +15,15 @@ export const RestaurantLoginModal: React.FC = () => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!targetRestaurant) {
-      setErrorMsg('No restaurant found. Please onboard a restaurant in Super Admin first.');
+    if (!phoneInput.trim() || !pinInput.trim()) {
+      setErrorMsg('Please enter both registered Phone Number and Password / PIN.');
       return;
     }
 
-    const success = loginRestaurant(targetRestaurant.id, phoneInput, pinInput);
+    const restIdToTry = targetRestaurant?.id || '';
+    const success = loginRestaurant(restIdToTry, phoneInput, pinInput);
     if (!success) {
-      setErrorMsg(`Invalid credentials. Check registered Phone (${targetRestaurant.phone}) and Password / PIN.`);
+      setErrorMsg('Login failed. Ensure your restaurant is active and phone/password are correct.');
     }
   };
 

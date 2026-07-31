@@ -76,7 +76,7 @@ interface SaaSContextType {
   addRestaurantTenant: (restaurant: Omit<Restaurant, 'id' | 'totalOrdersCount' | 'totalRevenue' | 'createdAt'>) => void;
   updateTenantStatus: (restaurantId: string, status: Restaurant['status']) => void;
   deleteRestaurantTenant: (restaurantId: string) => void;
-  
+
   // Notification system
   toastMessage: string | null;
   showToast: (msg: string) => void;
@@ -129,21 +129,38 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginRestaurant = (restId: string, phone: string, pin: string): boolean => {
     const target = (restId || '').toLowerCase().trim();
     const targetClean = target.replace(/[^a-z0-9]/g, '');
+    const cleanPhoneInput = (phone || '').replace(/[^0-9]/g, '');
 
-    const targetRest = restaurants.find(r => 
-      r.id.toLowerCase() === target ||
-      (r.slug && r.slug.toLowerCase() === target) ||
-      (r.name && r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === target) ||
-      (r.name && r.name.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean)
-    ) || currentRestaurant;
+    // 1. Find matching restaurant by ID, slug, name, or phone number
+    const targetRest = restaurants.find(r => {
+      const rId = (r.id || '').toLowerCase();
+      const rSlug = (r.slug || '').toLowerCase();
+      const rNameSlug = r.name ? r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
+      const rCleanName = r.name ? r.name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+      const rPhone = (r.phone || '').replace(/[^0-9]/g, '');
 
-    if (!targetRest) return false;
+      return (
+        (target && (rId === target || rSlug === target || rNameSlug === target || rCleanName === targetClean)) ||
+        (cleanPhoneInput && rPhone === cleanPhoneInput)
+      );
+    });
 
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    if (!targetRest) {
+      showToast('❌ Restaurant account not found or has been deleted.');
+      return false;
+    }
+
+    // 2. Check if suspended
+    if (targetRest.status === 'suspended') {
+      showToast('⚠️ Account SUSPENDED. Please contact Super Admin.');
+      return false;
+    }
+
+    // 3. Verify phone & password
     const restPhone = targetRest.phone ? targetRest.phone.replace(/[^0-9]/g, '') : '';
     const expectedPassword = targetRest.password || '123456';
 
-    const isPhoneValid = (cleanPhone && cleanPhone === restPhone) || (phone && phone.trim() === targetRest.phone.trim());
+    const isPhoneValid = (cleanPhoneInput && cleanPhoneInput === restPhone) || (phone && phone.trim() === targetRest.phone.trim());
     const isPassValid = (pin && pin.trim() === expectedPassword) || pin === '123456';
 
     if (isPhoneValid && isPassValid) {
@@ -153,6 +170,8 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       showToast(`Welcome ${targetRest.name} Admin!`);
       return true;
     }
+
+    showToast('❌ Invalid phone number or password.');
     return false;
   };
 
@@ -216,8 +235,8 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (targetParam) {
             const target = targetParam.toLowerCase().trim();
             const targetClean = target.replace(/[^a-z0-9]/g, '');
-            const found = dbTenants.find(t => 
-              t.id.toLowerCase() === target || 
+            const found = dbTenants.find(t =>
+              t.id.toLowerCase() === target ||
               (t.slug && t.slug.toLowerCase() === target) ||
               (t.name && t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === target) ||
               (t.name && t.name.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean)
@@ -348,7 +367,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isSupabaseConfigured) {
       createOrderDB(newOrder);
     }
-    
+
     // Update restaurant order count and revenue
     setRestaurants(prev => prev.map(r => r.id === currentRestaurant.id ? {
       ...r,
@@ -394,8 +413,8 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const trimmed = name.trim();
     if (!trimmed) return;
 
-    const exists = categories.some(c => 
-      c.restaurantId === currentRestaurant.id && 
+    const exists = categories.some(c =>
+      c.restaurantId === currentRestaurant.id &&
       c.name.toLowerCase().trim() === trimmed.toLowerCase()
     );
     if (exists) {
@@ -460,6 +479,10 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMenuItems(prev => prev.filter(m => m.restaurantId !== restaurantId));
     setOffers(prev => prev.filter(o => o.restaurantId !== restaurantId));
     setOrders(prev => prev.filter(o => o.restaurantId !== restaurantId));
+
+    if (authenticatedRestaurantId === restaurantId) {
+      setAuthenticatedRestaurantId(null);
+    }
 
     if (isSupabaseConfigured) {
       deleteTenantDB(restaurantId);
