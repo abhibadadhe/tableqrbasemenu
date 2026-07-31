@@ -30,6 +30,10 @@ export const RestaurantAdminPortal: React.FC = () => {
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
   const [newCatName, setNewCatName] = useState<string>('');
 
+  const uniqueCategories = currentCategories.filter((c, index, self) =>
+    index === self.findIndex(cat => cat.name.toLowerCase().trim() === c.name.toLowerCase().trim())
+  );
+
   // Form State
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
@@ -466,7 +470,7 @@ export const RestaurantAdminPortal: React.FC = () => {
                     onChange={(e) => setCategoryId(e.target.value)}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
                   >
-                    {currentCategories.map(c => (
+                    {uniqueCategories.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
@@ -530,7 +534,7 @@ export const RestaurantAdminPortal: React.FC = () => {
       {editingDish && (
         <EditDishModal
           dish={editingDish}
-          categories={currentCategories}
+          categories={uniqueCategories}
           onClose={() => setEditingDish(null)}
           onSave={(updated) => {
             updateMenuItem(updated);

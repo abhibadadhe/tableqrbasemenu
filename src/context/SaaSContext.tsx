@@ -385,14 +385,26 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addCategory = (name: string) => {
     if (!currentRestaurant) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const exists = categories.some(c => 
+      c.restaurantId === currentRestaurant.id && 
+      c.name.toLowerCase().trim() === trimmed.toLowerCase()
+    );
+    if (exists) {
+      showToast(`Category "${trimmed}" already exists.`);
+      return;
+    }
+
     const newCat: Category = {
       id: `cat-${Date.now()}`,
       restaurantId: currentRestaurant.id,
-      name
+      name: trimmed
     };
     setCategories(prev => [...prev, newCat]);
     if (isSupabaseConfigured) createCategoryDB(newCat);
-    showToast(`Category "${name}" created.`);
+    showToast(`Category "${trimmed}" created.`);
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
