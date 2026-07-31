@@ -12,14 +12,15 @@ export const GlobalNavbar: React.FC = () => {
     isSuperAdminAuthenticated,
     logoutSuperAdmin,
     authenticatedRestaurantId,
-    logoutRestaurant
+    logoutRestaurant,
+    currentRestaurant
   } = useSaaS();
 
-  // If customer is on mobile QR view, rendering header is handled inside mobile view wrapper
+  // 1. Customer Mobile QR View
   if (currentRole === 'customer') {
     return (
       <header className="global-nav">
-        <div className="brand-logo" onClick={() => setCurrentRole('landing')}>
+        <div className="brand-logo">
           <QrCode className="w-6 h-6 text-primary" style={{ color: 'var(--primary)' }} />
           <span>Table</span>QR
         </div>
@@ -46,19 +47,55 @@ export const GlobalNavbar: React.FC = () => {
               ))}
             </select>
           </div>
-
-          <button
-            className="role-btn"
-            onClick={() => setCurrentRole('landing')}
-            style={{ fontSize: '0.8rem', padding: '4px 10px' }}
-          >
-            Exit Menu
-          </button>
         </div>
       </header>
     );
   }
 
+  // 2. Restaurant Portal / Restaurant Login View - NO SaaS Pitch or Super Admin tabs!
+  if (currentRole === 'restaurant') {
+    return (
+      <header className="global-nav">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="brand-logo">
+            <QrCode className="w-6 h-6 text-primary" style={{ color: 'var(--primary)' }} />
+            <span>Table</span>QR
+          </div>
+
+          {currentRestaurant && (
+            <span style={{
+              background: 'rgba(255, 87, 34, 0.15)',
+              color: 'var(--primary)',
+              border: '1px solid rgba(255, 87, 34, 0.3)',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: '800',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <Store className="w-4 h-4" /> {currentRestaurant.name} Admin Portal
+            </span>
+          )}
+        </div>
+
+        <nav className="role-switcher">
+          {authenticatedRestaurantId && (
+            <button
+              className="role-btn"
+              onClick={logoutRestaurant}
+              style={{ color: '#fca5a5', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+            >
+              <LogOut className="w-4 h-4" /> Logout Restaurant
+            </button>
+          )}
+        </nav>
+      </header>
+    );
+  }
+
+  // 3. SaaS Landing & Super Admin View
   return (
     <header className="global-nav">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -102,31 +139,13 @@ export const GlobalNavbar: React.FC = () => {
           Super Admin {isSuperAdminAuthenticated && '(Active)'}
         </button>
 
-        <button
-          className={`role-btn ${currentRole === 'restaurant' ? 'active' : ''}`}
-          onClick={() => setCurrentRole('restaurant')}
-        >
-          <Store className="w-4 h-4" />
-          Restaurant Portal {authenticatedRestaurantId && '(Active)'}
-        </button>
-
-        {isSuperAdminAuthenticated && currentRole === 'superadmin' && (
+        {isSuperAdminAuthenticated && (
           <button
             className="role-btn"
             onClick={logoutSuperAdmin}
             style={{ color: '#fca5a5' }}
           >
             <LogOut className="w-4 h-4" /> Logout Admin
-          </button>
-        )}
-
-        {authenticatedRestaurantId && currentRole === 'restaurant' && (
-          <button
-            className="role-btn"
-            onClick={logoutRestaurant}
-            style={{ color: '#fca5a5' }}
-          >
-            <LogOut className="w-4 h-4" /> Logout Restaurant
           </button>
         )}
       </nav>
