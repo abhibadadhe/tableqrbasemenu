@@ -6,15 +6,11 @@ interface OrderBillPrintModalProps {
   order: Order;
   restaurant: Restaurant;
   onClose: () => void;
-  onPrintCompleted?: () => void;
 }
 
-export const OrderBillPrintModal: React.FC<OrderBillPrintModalProps> = ({ order, restaurant, onClose, onPrintCompleted }) => {
+export const OrderBillPrintModal: React.FC<OrderBillPrintModalProps> = ({ order, restaurant, onClose }) => {
   const handlePrint = () => {
     window.print();
-    if (onPrintCompleted) {
-      onPrintCompleted();
-    }
   };
 
   const currentDate = new Date().toLocaleDateString('en-IN', {
