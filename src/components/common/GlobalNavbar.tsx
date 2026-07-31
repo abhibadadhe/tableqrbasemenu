@@ -7,7 +7,6 @@ export const GlobalNavbar: React.FC = () => {
     currentRole,
     setCurrentRole,
     activeTableNumber,
-    setActiveTableNumber,
     isLiveDB,
     isSuperAdminAuthenticated,
     logoutSuperAdmin,
@@ -26,27 +25,20 @@ export const GlobalNavbar: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
-            <span style={{ color: '#94a3b8' }}>Table #:</span>
-            <select
-              value={activeTableNumber}
-              onChange={(e) => setActiveTableNumber(Number(e.target.value))}
-              style={{
-                background: '#1e293b',
-                color: '#fff',
-                border: '1px solid #334155',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontWeight: '700'
-              }}
-            >
-              {Array.from({ length: currentRestaurant?.tablesCount || 20 }, (_, i) => i + 1).map((num) => (
-                <option key={num} value={num}>
-                  Table {num}
-                </option>
-              ))}
-            </select>
-          </div>
+          <span style={{
+            background: 'rgba(255, 87, 34, 0.15)',
+            color: 'var(--primary)',
+            border: '1px solid var(--primary)',
+            padding: '0.25rem 0.75rem',
+            borderRadius: '20px',
+            fontSize: '0.85rem',
+            fontWeight: '800',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            📍 Table #{activeTableNumber}
+          </span>
         </div>
       </header>
     );

@@ -34,6 +34,11 @@ export const CustomerMobileView: React.FC = () => {
   const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
   const [showOrdersModal, setShowOrdersModal] = useState<boolean>(false);
 
+  // Deduplicate categories by normalized name
+  const uniqueCategories = currentCategories.filter((cat, index, self) =>
+    index === self.findIndex((c) => c.name.toLowerCase().trim() === cat.name.toLowerCase().trim())
+  );
+
   // Filter items
   const filteredItems = currentMenuItems.filter((item) => {
     const matchesCat = selectedCatId === 'cat-all' || item.categoryId === selectedCatId;
@@ -177,21 +182,29 @@ export const CustomerMobileView: React.FC = () => {
         </div>
 
         {/* Category Pills */}
-        <div className="category-pills">
-          {currentCategories.map((cat) => (
+        {uniqueCategories.length > 0 && (
+          <div className="category-pills">
             <button
-              key={cat.id}
-              className={`cat-pill ${selectedCatId === cat.id ? 'active' : ''}`}
-              onClick={() => setSelectedCatId(cat.id)}
+              className={`cat-pill ${selectedCatId === 'cat-all' ? 'active' : ''}`}
+              onClick={() => setSelectedCatId('cat-all')}
             >
-              {cat.name === 'Tandoor' && '🔥 '}
-              {cat.name === 'Kurkure Buck' && '🍟 '}
-              {cat.name === 'Starters' && '🥗 '}
-              {cat.name === 'Beverages' && '🥤 '}
-              {cat.name}
+              All Dishes
             </button>
-          ))}
-        </div>
+            {uniqueCategories.map((cat) => (
+              <button
+                key={cat.id}
+                className={`cat-pill ${selectedCatId === cat.id ? 'active' : ''}`}
+                onClick={() => setSelectedCatId(cat.id)}
+              >
+                {cat.name === 'Tandoor' && '🔥 '}
+                {cat.name === 'Kurkure Buck' && '🍟 '}
+                {cat.name === 'Starters' && '🥗 '}
+                {cat.name === 'Beverages' && '🥤 '}
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Veg / Non-Veg Toggle Pills */}
         <div className="filter-toggle-row">
