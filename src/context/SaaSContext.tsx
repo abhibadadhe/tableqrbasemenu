@@ -14,7 +14,8 @@ import {
   createTenantDB,
   createCategoryDB,
   createMenuItemDB,
-  updateTenantStatusDB
+  updateTenantStatusDB,
+  deleteTenantDB
 } from '../lib/supabase';
 
 interface SaaSContextType {
@@ -71,6 +72,7 @@ interface SaaSContextType {
   // Super Admin Actions
   addRestaurantTenant: (restaurant: Omit<Restaurant, 'id' | 'totalOrdersCount' | 'totalRevenue' | 'createdAt'>) => void;
   updateTenantStatus: (restaurantId: string, status: Restaurant['status']) => void;
+  deleteRestaurantTenant: (restaurantId: string) => void;
   
   // Notification system
   toastMessage: string | null;
@@ -399,6 +401,20 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     showToast(`Tenant status set to ${status}`);
   };
 
+  const deleteRestaurantTenant = (restaurantId: string) => {
+    const target = restaurants.find(r => r.id === restaurantId);
+    setRestaurants(prev => prev.filter(r => r.id !== restaurantId));
+    setCategories(prev => prev.filter(c => c.restaurantId !== restaurantId));
+    setMenuItems(prev => prev.filter(m => m.restaurantId !== restaurantId));
+    setOffers(prev => prev.filter(o => o.restaurantId !== restaurantId));
+    setOrders(prev => prev.filter(o => o.restaurantId !== restaurantId));
+
+    if (isSupabaseConfigured) {
+      deleteTenantDB(restaurantId);
+    }
+    showToast(`Deleted "${target?.name || 'Restaurant'}" and all associated data.`);
+  };
+
   return (
     <SaaSContext.Provider value={{
       currentRole,
@@ -440,6 +456,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateRestaurantSettings,
       addRestaurantTenant,
       updateTenantStatus,
+      deleteRestaurantTenant,
       toastMessage,
       showToast,
       isLiveDB: isSupabaseConfigured

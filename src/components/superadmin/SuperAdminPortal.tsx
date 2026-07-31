@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useSaaS } from '../../context/SaaSContext';
-import { Building2, DollarSign, TrendingUp, Users, Plus, ShieldCheck, ExternalLink, FileText } from 'lucide-react';
+import { Building2, DollarSign, TrendingUp, Users, Plus, ShieldCheck, ExternalLink, FileText, Trash2 } from 'lucide-react';
 import { ClientWelcomeKitModal } from './ClientWelcomeKitModal';
 import { SuperAdminLoginModal } from '../auth/SuperAdminLoginModal';
 import type { Restaurant } from '../../types';
 
 export const SuperAdminPortal: React.FC = () => {
-  const { restaurants, addRestaurantTenant, updateTenantStatus, setActiveRestaurantId, setCurrentRole, isSuperAdminAuthenticated } = useSaaS();
+  const { restaurants, addRestaurantTenant, updateTenantStatus, deleteRestaurantTenant, setActiveRestaurantId, setCurrentRole, isSuperAdminAuthenticated } = useSaaS();
 
   if (!isSuperAdminAuthenticated) {
     return <SuperAdminLoginModal />;
@@ -245,6 +245,30 @@ export const SuperAdminPortal: React.FC = () => {
                         }}
                       >
                         {rest.status === 'active' ? 'Suspend' : 'Activate'}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to delete "${rest.name}"? This will permanently wipe all dishes, categories, offers, and orders for this restaurant.`)) {
+                            deleteRestaurantTenant(rest.id);
+                          }
+                        }}
+                        style={{
+                          padding: '0.4rem 0.8rem',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          background: 'rgba(239, 68, 68, 0.15)',
+                          color: '#ef4444',
+                          fontSize: '0.8rem',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                        title="Delete Restaurant & All Data"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
                       </button>
                     </div>
                   </td>
