@@ -579,6 +579,10 @@ export const RestaurantAdminPortal: React.FC = () => {
           order={printingOrder}
           restaurant={currentRestaurant}
           onClose={() => setPrintingOrder(null)}
+          onPrintCompleted={() => {
+            updateOrderStatus(printingOrder.id, 'completed');
+            setPrintingOrder(null);
+          }}
         />
       )}
     </div>
