@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useSaaS } from '../../context/SaaSContext';
 import { QRStandeeGenerator } from './QRStandeeGenerator';
-import { Plus, Trash2, ToggleLeft, ToggleRight, QrCode, Utensils, DollarSign, Clock } from 'lucide-react';
+import { RestaurantLoginModal } from '../auth/RestaurantLoginModal';
+import { Plus, Trash2, ToggleLeft, ToggleRight, QrCode, Utensils, DollarSign, Clock, LogOut } from 'lucide-react';
 
 export const RestaurantAdminPortal: React.FC = () => {
   const {
@@ -13,8 +14,14 @@ export const RestaurantAdminPortal: React.FC = () => {
     deleteMenuItem,
     toggleItemAvailability,
     addCategory,
-    updateOrderStatus
+    updateOrderStatus,
+    authenticatedRestaurantId,
+    logoutRestaurant
   } = useSaaS();
+
+  if (!currentRestaurant || !authenticatedRestaurantId || authenticatedRestaurantId !== currentRestaurant.id) {
+    return <RestaurantLoginModal />;
+  }
 
   const [activeTab, setActiveTab] = useState<'menu' | 'orders' | 'qr'>('menu');
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -146,6 +153,25 @@ export const RestaurantAdminPortal: React.FC = () => {
             }}
           >
             <QrCode className="w-4 h-4" /> QR Standee Generator
+          </button>
+
+          <button
+            onClick={logoutRestaurant}
+            title="Log Out"
+            style={{
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(239, 68, 68, 0.2)',
+              color: '#fca5a5',
+              padding: '0.6rem 1rem',
+              borderRadius: '12px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}
+          >
+            <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
       </div>

@@ -1,9 +1,63 @@
 import React from 'react';
 import { useSaaS } from '../../context/SaaSContext';
-import { QrCode, ShieldCheck, Store, Smartphone, Sparkles, Database } from 'lucide-react';
+import { QrCode, ShieldCheck, Store, Sparkles, Database, LogOut } from 'lucide-react';
 
 export const GlobalNavbar: React.FC = () => {
-  const { currentRole, setCurrentRole, activeTableNumber, setActiveTableNumber, isLiveDB } = useSaaS();
+  const {
+    currentRole,
+    setCurrentRole,
+    activeTableNumber,
+    setActiveTableNumber,
+    isLiveDB,
+    isSuperAdminAuthenticated,
+    logoutSuperAdmin,
+    authenticatedRestaurantId,
+    logoutRestaurant
+  } = useSaaS();
+
+  // If customer is on mobile QR view, rendering header is handled inside mobile view wrapper
+  if (currentRole === 'customer') {
+    return (
+      <header className="global-nav">
+        <div className="brand-logo" onClick={() => setCurrentRole('landing')}>
+          <QrCode className="w-6 h-6 text-primary" style={{ color: 'var(--primary)' }} />
+          <span>Table</span>QR
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
+            <span style={{ color: '#94a3b8' }}>Table #:</span>
+            <select
+              value={activeTableNumber}
+              onChange={(e) => setActiveTableNumber(Number(e.target.value))}
+              style={{
+                background: '#1e293b',
+                color: '#fff',
+                border: '1px solid #334155',
+                borderRadius: '6px',
+                padding: '2px 8px',
+                fontWeight: '700'
+              }}
+            >
+              {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num}>
+                  Table {num}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            className="role-btn"
+            onClick={() => setCurrentRole('landing')}
+            style={{ fontSize: '0.8rem', padding: '4px 10px' }}
+          >
+            Exit Menu
+          </button>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="global-nav">
@@ -45,7 +99,7 @@ export const GlobalNavbar: React.FC = () => {
           onClick={() => setCurrentRole('superadmin')}
         >
           <ShieldCheck className="w-4 h-4" />
-          Super Admin
+          Super Admin {isSuperAdminAuthenticated && '(Active)'}
         </button>
 
         <button
@@ -53,41 +107,29 @@ export const GlobalNavbar: React.FC = () => {
           onClick={() => setCurrentRole('restaurant')}
         >
           <Store className="w-4 h-4" />
-          Restaurant Portal
+          Restaurant Portal {authenticatedRestaurantId && '(Active)'}
         </button>
 
-        <button
-          className={`role-btn ${currentRole === 'customer' ? 'active' : ''}`}
-          onClick={() => setCurrentRole('customer')}
-        >
-          <Smartphone className="w-4 h-4" />
-          QR Menu (Table {activeTableNumber})
-        </button>
-      </nav>
-
-      {currentRole === 'customer' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-          <span style={{ color: '#94a3b8' }}>Table #:</span>
-          <select
-            value={activeTableNumber}
-            onChange={(e) => setActiveTableNumber(Number(e.target.value))}
-            style={{
-              background: '#1e293b',
-              color: '#fff',
-              border: '1px solid #334155',
-              borderRadius: '6px',
-              padding: '2px 8px',
-              fontWeight: '700'
-            }}
+        {isSuperAdminAuthenticated && currentRole === 'superadmin' && (
+          <button
+            className="role-btn"
+            onClick={logoutSuperAdmin}
+            style={{ color: '#fca5a5' }}
           >
-            {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-              <option key={num} value={num}>
-                Table {num}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+            <LogOut className="w-4 h-4" /> Logout Admin
+          </button>
+        )}
+
+        {authenticatedRestaurantId && currentRole === 'restaurant' && (
+          <button
+            className="role-btn"
+            onClick={logoutRestaurant}
+            style={{ color: '#fca5a5' }}
+          >
+            <LogOut className="w-4 h-4" /> Logout Restaurant
+          </button>
+        )}
+      </nav>
     </header>
   );
 };

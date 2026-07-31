@@ -2,10 +2,15 @@ import React, { useState } from 'react';
 import { useSaaS } from '../../context/SaaSContext';
 import { Building2, DollarSign, TrendingUp, Users, Plus, ShieldCheck, ExternalLink, FileText } from 'lucide-react';
 import { ClientWelcomeKitModal } from './ClientWelcomeKitModal';
+import { SuperAdminLoginModal } from '../auth/SuperAdminLoginModal';
 import type { Restaurant } from '../../types';
 
 export const SuperAdminPortal: React.FC = () => {
-  const { restaurants, addRestaurantTenant, updateTenantStatus, setActiveRestaurantId, setCurrentRole } = useSaaS();
+  const { restaurants, addRestaurantTenant, updateTenantStatus, setActiveRestaurantId, setCurrentRole, isSuperAdminAuthenticated } = useSaaS();
+
+  if (!isSuperAdminAuthenticated) {
+    return <SuperAdminLoginModal />;
+  }
   const [showAddTenantModal, setShowAddTenantModal] = useState<boolean>(false);
   const [selectedKitRestaurant, setSelectedKitRestaurant] = useState<Restaurant | null>(null);
 

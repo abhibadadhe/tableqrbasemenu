@@ -19,6 +19,15 @@ export const CustomerMobileView: React.FC = () => {
     orders
   } = useSaaS();
 
+  if (!currentRestaurant) {
+    return (
+      <div style={{ textAlign: 'center', padding: '4rem 1.5rem', color: 'var(--text-muted)' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: '800' }}>No Active Restaurant Found</h2>
+        <p style={{ marginTop: '0.5rem' }}>Please scan a valid table QR code or onboard a restaurant in Super Admin.</p>
+      </div>
+    );
+  }
+
   const [selectedCatId, setSelectedCatId] = useState<string>('cat-all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [vegFilter, setVegFilter] = useState<'both' | 'veg' | 'nonveg'>('both');

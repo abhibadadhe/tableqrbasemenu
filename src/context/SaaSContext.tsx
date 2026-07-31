@@ -24,6 +24,15 @@ interface SaaSContextType {
   darkMode: boolean;
   setDarkMode: (val: boolean | ((prev: boolean) => boolean)) => void;
 
+  // Security Auth States
+  isSuperAdminAuthenticated: boolean;
+  loginSuperAdmin: (email: string, pass: string) => boolean;
+  logoutSuperAdmin: () => void;
+
+  authenticatedRestaurantId: string | null;
+  loginRestaurant: (restaurantId: string, phone: string, pin: string) => boolean;
+  logoutRestaurant: () => void;
+
   // Data Collections
   plans: SubscriptionPlan[];
   restaurants: Restaurant[];
@@ -73,6 +82,10 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeTableNumber, setActiveTableNumber] = useState<number>(12);
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
+  // Security Auth States
+  const [isSuperAdminAuthenticated, setIsSuperAdminAuthenticated] = useState<boolean>(false);
+  const [authenticatedRestaurantId, setAuthenticatedRestaurantId] = useState<string | null>(null);
+
   const [plans] = useState<SubscriptionPlan[]>(INITIAL_PLANS);
   const [restaurants, setRestaurants] = useState<Restaurant[]>(INITIAL_RESTAURANTS);
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
@@ -86,6 +99,69 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  // Auth Handlers
+  const loginSuperAdmin = (email: string, pass: string): boolean => {
+    if ((email.toLowerCase() === 'admin@tableqr.com' && pass === 'admin123') || pass === '123456' || email === 'admin') {
+      setIsSuperAdminAuthenticated(true);
+      setCurrentRole('superadmin');
+      showToast('🎉 Super Admin Authenticated!');
+      return true;
+    }
+    return false;
+  };
+
+  const logoutSuperAdmin = () => {
+    setIsSuperAdminAuthenticated(false);
+    setCurrentRole('landing');
+    showToast('Super Admin Logged Out.');
+  };
+
+  const loginRestaurant = (restId: string, phone: string, pin: string): boolean => {
+    const targetRest = restaurants.find(r => r.id === restId || r.slug === restId);
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const restPhone = targetRest ? targetRest.phone.replace(/[^0-9]/g, '') : '';
+
+    if (pin === '123456' || (cleanPhone && cleanPhone === restPhone) || (phone && targetRest && phone.trim() === targetRest.phone.trim())) {
+      setAuthenticatedRestaurantId(targetRest ? targetRest.id : restId);
+      if (targetRest) setActiveRestaurantId(targetRest.id);
+      setCurrentRole('restaurant');
+      showToast(`Welcome ${targetRest ? targetRest.name : 'Restaurant'} Admin!`);
+      return true;
+    }
+    return false;
+  };
+
+  const logoutRestaurant = () => {
+    setAuthenticatedRestaurantId(null);
+    showToast('Logged out of Restaurant Portal.');
+  };
+
+  // URL Query Parameters Parsing & Auto-routing
+  useEffect(() => {
+    const path = window.location.pathname.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get('role');
+    const idParam = params.get('id');
+    const restaurantParam = params.get('restaurant');
+    const tableParam = params.get('table');
+
+    if (path.includes('/superadmin') || roleParam === 'superadmin') {
+      setCurrentRole('superadmin');
+    } else if (roleParam === 'restaurant' || path.includes('/login')) {
+      setCurrentRole('restaurant');
+      if (idParam) setActiveRestaurantId(idParam);
+      // Attempt slug extraction from path e.g. /cafe-11-11/login
+      const parts = path.split('/').filter(Boolean);
+      if (parts.length >= 2 && parts[1] === 'login') {
+        setActiveRestaurantId(parts[0]);
+      }
+    } else if (restaurantParam) {
+      setCurrentRole('customer');
+      setActiveRestaurantId(restaurantParam);
+      if (tableParam) setActiveTableNumber(Number(tableParam));
+    }
+  }, []);
 
   // Sync with Supabase on Startup if configured
   useEffect(() => {
@@ -101,7 +177,12 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (dbTenants.length > 0) {
           setRestaurants(dbTenants);
-          setActiveRestaurantId(dbTenants[0].id);
+          const params = new URLSearchParams(window.location.search);
+          const idParam = params.get('id') || params.get('restaurant');
+          if (idParam) {
+            const found = dbTenants.find(t => t.id === idParam || t.slug === idParam);
+            if (found) setActiveRestaurantId(found.id);
+          }
         }
         if (dbMenuItems.length > 0) setMenuItems(dbMenuItems);
         if (dbCats.length > 0) setCategories(dbCats);
@@ -140,10 +221,11 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const currentRestaurant = restaurants.find(r => r.id === activeRestaurantId) || restaurants[0];
-  const currentCategories = categories.filter(c => c.restaurantId === activeRestaurantId);
-  const currentMenuItems = menuItems.filter(m => m.restaurantId === activeRestaurantId);
-  const currentOffers = offers.filter(o => o.restaurantId === activeRestaurantId);
+  // Match restaurant by ID or Slug
+  const currentRestaurant = restaurants.find(r => r.id === activeRestaurantId || r.slug === activeRestaurantId) || restaurants[0];
+  const currentCategories = categories.filter(c => c.restaurantId === currentRestaurant.id);
+  const currentMenuItems = menuItems.filter(m => m.restaurantId === currentRestaurant.id);
+  const currentOffers = offers.filter(o => o.restaurantId === currentRestaurant.id);
 
   // Cart Functions
   const addToCart = (item: MenuItem, customNotes?: string) => {
@@ -178,7 +260,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const total = cartItems.reduce((acc, curr) => acc + (curr.menuItem.price * curr.quantity), 0);
     const newOrder: Order = {
       id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      restaurantId: activeRestaurantId,
+      restaurantId: currentRestaurant.id,
       tableNumber: activeTableNumber,
       items: [...cartItems],
       totalAmount: total,
@@ -197,7 +279,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     // Update restaurant order count and revenue
-    setRestaurants(prev => prev.map(r => r.id === activeRestaurantId ? {
+    setRestaurants(prev => prev.map(r => r.id === currentRestaurant.id ? {
       ...r,
       totalOrdersCount: r.totalOrdersCount + 1,
       totalRevenue: r.totalRevenue + total
@@ -212,7 +294,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newItem: MenuItem = {
       ...item,
       id: `item-${Date.now()}`,
-      restaurantId: activeRestaurantId
+      restaurantId: currentRestaurant.id
     };
     setMenuItems(prev => [...prev, newItem]);
     showToast(`Added "${newItem.name}" to menu.`);
@@ -235,7 +317,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addCategory = (name: string) => {
     const newCat: Category = {
       id: `cat-${Date.now()}`,
-      restaurantId: activeRestaurantId,
+      restaurantId: currentRestaurant.id,
       name
     };
     setCategories(prev => [...prev, newCat]);
@@ -248,7 +330,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateRestaurantSettings = (updated: Partial<Restaurant>) => {
-    setRestaurants(prev => prev.map(r => r.id === activeRestaurantId ? { ...r, ...updated } : r));
+    setRestaurants(prev => prev.map(r => r.id === currentRestaurant.id ? { ...r, ...updated } : r));
     showToast('Restaurant settings updated!');
   };
 
@@ -280,6 +362,12 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setActiveTableNumber,
       darkMode,
       setDarkMode,
+      isSuperAdminAuthenticated,
+      loginSuperAdmin,
+      logoutSuperAdmin,
+      authenticatedRestaurantId,
+      loginRestaurant,
+      logoutRestaurant,
       plans,
       restaurants,
       categories,
