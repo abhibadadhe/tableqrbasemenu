@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useSaaS } from '../../context/SaaSContext';
-import { ShieldCheck, Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, ArrowRight } from 'lucide-react';
 
 export const SuperAdminLoginModal: React.FC = () => {
-  const { loginSuperAdmin, setCurrentRole } = useSaaS();
+  const { loginSuperAdmin } = useSaaS();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -37,24 +37,6 @@ export const SuperAdminLoginModal: React.FC = () => {
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
         border: '1px solid #334155'
       }}>
-        <button
-          onClick={() => setCurrentRole('landing')}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            color: '#94a3b8',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            fontSize: '0.85rem',
-            marginBottom: '1.5rem',
-            fontWeight: '600'
-          }}
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to SaaS Homepage
-        </button>
-
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <div style={{
             width: '64px',

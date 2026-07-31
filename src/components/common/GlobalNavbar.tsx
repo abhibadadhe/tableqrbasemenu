@@ -95,12 +95,12 @@ export const GlobalNavbar: React.FC = () => {
     );
   }
 
-  // 3. Super Admin View (when on /superadmin route)
+  // 3. Super Admin View (when on /superadmin route) - NO SaaS Pitch tab!
   if (currentRole === 'superadmin') {
     return (
       <header className="global-nav">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div className="brand-logo" onClick={() => setCurrentRole('landing')}>
+          <div className="brand-logo">
             <QrCode className="w-6 h-6 text-primary" style={{ color: 'var(--primary)' }} />
             <span>Table</span>QR
           </div>
@@ -122,14 +122,6 @@ export const GlobalNavbar: React.FC = () => {
         </div>
 
         <nav className="role-switcher">
-          <button
-            className="role-btn"
-            onClick={() => setCurrentRole('landing')}
-          >
-            <Sparkles className="w-4 h-4" />
-            SaaS Pitch
-          </button>
-
           {isSuperAdminAuthenticated && (
             <button
               className="role-btn"
@@ -144,7 +136,7 @@ export const GlobalNavbar: React.FC = () => {
     );
   }
 
-  // 4. Public SaaS Landing Homepage (Clean - No Super Admin tab!)
+  // 4. Public SaaS Landing Homepage (Clean - No Super Admin or internal tabs!)
   return (
     <header className="global-nav">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
