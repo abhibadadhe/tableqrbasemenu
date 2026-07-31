@@ -14,6 +14,8 @@ import {
   createTenantDB,
   createCategoryDB,
   createMenuItemDB,
+  updateMenuItemDB,
+  deleteMenuItemDB,
   updateTenantStatusDB,
   deleteTenantDB
 } from '../lib/supabase';
@@ -350,11 +352,13 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateMenuItem = (updated: MenuItem) => {
     setMenuItems(prev => prev.map(m => m.id === updated.id ? updated : m));
+    if (isSupabaseConfigured) updateMenuItemDB(updated);
     showToast(`Updated "${updated.name}".`);
   };
 
   const deleteMenuItem = (itemId: string) => {
     setMenuItems(prev => prev.filter(m => m.id !== itemId));
+    if (isSupabaseConfigured) deleteMenuItemDB(itemId);
     showToast('Menu item deleted.');
   };
 

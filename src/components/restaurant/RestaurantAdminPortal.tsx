@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useSaaS } from '../../context/SaaSContext';
 import { QRStandeeGenerator } from './QRStandeeGenerator';
 import { RestaurantLoginModal } from '../auth/RestaurantLoginModal';
-import { Plus, Trash2, ToggleLeft, ToggleRight, QrCode, Utensils, DollarSign, Clock, LogOut } from 'lucide-react';
+import { Plus, Trash2, Pencil, ToggleLeft, ToggleRight, QrCode, Utensils, DollarSign, Clock, LogOut } from 'lucide-react';
+import type { MenuItem } from '../../types';
 
 export const RestaurantAdminPortal: React.FC = () => {
   const {
@@ -11,6 +12,7 @@ export const RestaurantAdminPortal: React.FC = () => {
     currentMenuItems,
     orders,
     addMenuItem,
+    updateMenuItem,
     deleteMenuItem,
     toggleItemAvailability,
     addCategory,
@@ -25,6 +27,7 @@ export const RestaurantAdminPortal: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'menu' | 'orders' | 'qr'>('menu');
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
   const [newCatName, setNewCatName] = useState<string>('');
 
   // Form State
@@ -292,12 +295,23 @@ export const RestaurantAdminPortal: React.FC = () => {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => deleteMenuItem(dish.id)}
-                      style={{ border: 'none', background: 'transparent', color: 'var(--danger)', cursor: 'pointer' }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        onClick={() => setEditingDish(dish)}
+                        style={{ border: 'none', background: 'transparent', color: 'var(--primary)', cursor: 'pointer' }}
+                        title="Edit Dish"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => deleteMenuItem(dish.id)}
+                        style={{ border: 'none', background: 'transparent', color: 'var(--danger)', cursor: 'pointer' }}
+                        title="Delete Dish"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.4rem 0' }}>
@@ -511,6 +525,168 @@ export const RestaurantAdminPortal: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Dish Modal */}
+      {editingDish && (
+        <EditDishModal
+          dish={editingDish}
+          categories={currentCategories}
+          onClose={() => setEditingDish(null)}
+          onSave={(updated) => {
+            updateMenuItem(updated);
+            setEditingDish(null);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+const EditDishModal: React.FC<{
+  dish: MenuItem;
+  categories: any[];
+  onClose: () => void;
+  onSave: (updated: MenuItem) => void;
+}> = ({ dish, categories, onClose, onSave }) => {
+  const [name, setName] = useState(dish.name);
+  const [price, setPrice] = useState(dish.price.toString());
+  const [description, setDescription] = useState(dish.description);
+  const [image, setImage] = useState(dish.image);
+  const [categoryId, setCategoryId] = useState(dish.categoryId);
+  const [tagsInput, setTagsInput] = useState(dish.tags.join(', '));
+  const [isVeg, setIsVeg] = useState(dish.isVeg);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({
+      ...dish,
+      name,
+      price: Number(price),
+      description,
+      image: image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+      categoryId,
+      tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
+      isVeg
+    });
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0,0,0,0.6)',
+      backdropFilter: 'blur(4px)',
+      zIndex: 999,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '1rem'
+    }}>
+      <div style={{
+        background: 'var(--bg-card)',
+        padding: '2rem',
+        borderRadius: '24px',
+        maxWidth: '480px',
+        width: '100%',
+        boxShadow: 'var(--shadow-lg)'
+      }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '1rem' }}>Edit Dish Item</h3>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700' }}>Dish Name:</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700' }}>Price (₹):</label>
+              <input
+                type="number"
+                required
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700' }}>Category:</label>
+              <select
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700' }}>Description:</label>
+            <textarea
+              rows={2}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700' }}>Image URL:</label>
+            <input
+              type="text"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.8rem', fontWeight: '700' }}>Tags (comma separated):</label>
+            <input
+              type="text"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <input
+                type="checkbox"
+                checked={isVeg}
+                onChange={(e) => setIsVeg(e.target.checked)}
+              />
+              Vegetarian Dish
+            </label>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{ padding: '0.6rem 1.2rem', borderRadius: '12px', border: '1px solid var(--border-color)', background: 'transparent', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              style={{ padding: '0.6rem 1.2rem', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: '#fff', fontWeight: '700', cursor: 'pointer' }}
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

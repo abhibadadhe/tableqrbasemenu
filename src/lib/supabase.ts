@@ -181,6 +181,25 @@ export async function createMenuItemDB(m: MenuItem) {
   });
 }
 
+export async function updateMenuItemDB(m: MenuItem) {
+  if (!supabase) return;
+  await supabase.from('menu_items').update({
+    name: m.name,
+    description: m.description,
+    price: m.price,
+    image: m.image,
+    tags: m.tags,
+    is_veg: m.isVeg,
+    is_available: m.isAvailable,
+    category_id: m.categoryId
+  }).eq('id', m.id);
+}
+
+export async function deleteMenuItemDB(itemId: string) {
+  if (!supabase) return;
+  await supabase.from('menu_items').delete().eq('id', itemId);
+}
+
 export async function createOrderDB(order: Order) {
   if (!supabase) return;
   await supabase.from('orders').insert({
