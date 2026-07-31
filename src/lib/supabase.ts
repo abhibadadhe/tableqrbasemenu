@@ -213,3 +213,8 @@ export async function createOrderDB(order: Order) {
     customer_name: order.customerName
   });
 }
+
+export async function updateOrderStatusDB(orderId: string, status: Order['status']) {
+  if (!supabase) return;
+  await supabase.from('orders').update({ status }).eq('id', orderId);
+}

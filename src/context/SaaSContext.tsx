@@ -11,6 +11,7 @@ import {
   fetchOffersDB,
   fetchOrdersDB,
   createOrderDB,
+  updateOrderStatusDB,
   createTenantDB,
   createCategoryDB,
   createMenuItemDB,
@@ -408,8 +409,15 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status']) => {
+    const target = orders.find(o => o.id === orderId);
+    if (target && target.status === 'completed') {
+      showToast('⚠️ Completed order status is locked and cannot be reverted.');
+      return;
+    }
+
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
-    showToast(`Order status updated to ${status.toUpperCase()}`);
+    if (isSupabaseConfigured) updateOrderStatusDB(orderId, status);
+    showToast(`Order ${orderId} marked as ${status.toUpperCase()}`);
   };
 
   const updateRestaurantSettings = (updated: Partial<Restaurant>) => {

@@ -35,7 +35,8 @@ export const RestaurantAdminPortal: React.FC = () => {
   );
 
   const restaurantOrders = orders.filter(o => o.restaurantId === currentRestaurant.id);
-  const totalSalesRevenue = restaurantOrders.reduce((acc, curr) => acc + curr.totalAmount, 0);
+  const completedOrders = restaurantOrders.filter(o => o.status === 'completed');
+  const totalSalesRevenue = completedOrders.reduce((acc, curr) => acc + curr.totalAmount, 0);
 
   // Form State
   const [name, setName] = useState('');
@@ -362,7 +363,7 @@ export const RestaurantAdminPortal: React.FC = () => {
         <div>
           <h2 style={{ fontSize: '1.3rem', fontWeight: '800', marginBottom: '1.25rem' }}>Live Kitchen Order Board</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
-            {orders.map((ord) => (
+            {restaurantOrders.map((ord) => (
               <div key={ord.id} style={{
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border-color)',
@@ -378,6 +379,7 @@ export const RestaurantAdminPortal: React.FC = () => {
 
                   <select
                     value={ord.status}
+                    disabled={ord.status === 'completed'}
                     onChange={(e) => updateOrderStatus(ord.id, e.target.value as any)}
                     style={{
                       padding: '4px 10px',
@@ -385,14 +387,15 @@ export const RestaurantAdminPortal: React.FC = () => {
                       fontWeight: '800',
                       fontSize: '0.8rem',
                       border: '1px solid var(--border-color)',
-                      background: ord.status === 'placed' ? '#fef3c7' : ord.status === 'preparing' ? '#dbeafe' : '#dcfce7',
-                      color: ord.status === 'placed' ? '#b45309' : ord.status === 'preparing' ? '#1d4ed8' : '#15803d'
+                      background: ord.status === 'placed' ? '#fef3c7' : ord.status === 'preparing' ? '#dbeafe' : ord.status === 'served' ? '#e0e7ff' : '#dcfce7',
+                      color: ord.status === 'placed' ? '#b45309' : ord.status === 'preparing' ? '#1d4ed8' : ord.status === 'served' ? '#4338ca' : '#15803d',
+                      cursor: ord.status === 'completed' ? 'not-allowed' : 'pointer'
                     }}
                   >
                     <option value="placed">PLACED</option>
                     <option value="preparing">PREPARING</option>
                     <option value="served">SERVED</option>
-                    <option value="completed">COMPLETED</option>
+                    <option value="completed">🔒 COMPLETED</option>
                   </select>
                 </div>
 
