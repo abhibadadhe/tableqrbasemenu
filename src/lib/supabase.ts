@@ -150,16 +150,20 @@ export async function createTenantDB(r: Restaurant) {
 
 export async function updateTenantStatusDB(tenantId: string, status: Restaurant['status']) {
   if (!supabase) return;
-  await supabase.from('tenants').update({ status }).eq('id', tenantId);
+  const tid = tenantId.trim();
+  const { error } = await supabase.from('tenants').update({ status }).or(`id.eq.${tid},slug.eq.${tid}`);
+  if (error) console.error('Supabase update tenant status error:', error);
 }
 
 export async function deleteTenantDB(tenantId: string) {
   if (!supabase) return;
-  await supabase.from('orders').delete().eq('tenant_id', tenantId);
-  await supabase.from('menu_items').delete().eq('tenant_id', tenantId);
-  await supabase.from('categories').delete().eq('tenant_id', tenantId);
-  await supabase.from('offers').delete().eq('tenant_id', tenantId);
-  await supabase.from('tenants').delete().eq('id', tenantId);
+  const tid = tenantId.trim();
+  await supabase.from('orders').delete().eq('tenant_id', tid);
+  await supabase.from('menu_items').delete().eq('tenant_id', tid);
+  await supabase.from('categories').delete().eq('tenant_id', tid);
+  await supabase.from('offers').delete().eq('tenant_id', tid);
+  const { error } = await supabase.from('tenants').delete().or(`id.eq.${tid},slug.eq.${tid}`);
+  if (error) console.error('Supabase delete tenant error:', error);
 }
 
 export async function createCategoryDB(c: Category) {
