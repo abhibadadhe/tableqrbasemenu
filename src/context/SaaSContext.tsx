@@ -163,25 +163,31 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // URL Query Parameters Parsing & Auto-routing
   useEffect(() => {
     const path = window.location.pathname.toLowerCase();
+    const parts = path.split('/').filter(Boolean);
     const params = new URLSearchParams(window.location.search);
     const roleParam = params.get('role');
     const idParam = params.get('id');
     const restaurantParam = params.get('restaurant');
     const tableParam = params.get('table');
 
+    if (tableParam) {
+      setActiveTableNumber(Number(tableParam) || 1);
+    }
+
     if (path.includes('/superadmin') || roleParam === 'superadmin') {
       setCurrentRole('superadmin');
     } else if (roleParam === 'restaurant' || path.includes('/login')) {
       setCurrentRole('restaurant');
       if (idParam) setActiveRestaurantId(idParam);
-      const parts = path.split('/').filter(Boolean);
-      if (parts.length >= 2 && parts[1] === 'login') {
-        setActiveRestaurantId(parts[0]);
-      }
+      else if (parts.length >= 1) setActiveRestaurantId(parts[0]);
+    } else if (parts.length >= 1 && parts[0] !== 'superadmin' && parts[0] !== 'landing') {
+      // Path format: /cafe11 or /cafe11?table=1
+      setCurrentRole('customer');
+      setActiveRestaurantId(parts[0]);
     } else if (restaurantParam) {
+      // Query format: /?restaurant=cafe11&table=1
       setCurrentRole('customer');
       setActiveRestaurantId(restaurantParam);
-      if (tableParam) setActiveTableNumber(Number(tableParam));
     }
   }, []);
 
@@ -199,8 +205,13 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (dbTenants.length > 0) {
           setRestaurants(dbTenants);
+          const path = window.location.pathname.toLowerCase();
+          const parts = path.split('/').filter(Boolean);
           const params = new URLSearchParams(window.location.search);
-          const targetParam = params.get('id') || params.get('restaurant');
+          const targetParam = (parts.length >= 1 && parts[0] !== 'superadmin' && parts[0] !== 'landing')
+            ? parts[0]
+            : (params.get('id') || params.get('restaurant'));
+
           if (targetParam) {
             const target = targetParam.toLowerCase().trim();
             const targetClean = target.replace(/[^a-z0-9]/g, '');
