@@ -87,7 +87,7 @@ const SaaSContext = createContext<SaaSContextType | undefined>(undefined);
 export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentRole, setCurrentRole] = useState<RoleMode>('landing');
   const [activeRestaurantId, setActiveRestaurantId] = useState<string>('');
-  const [activeTableNumber, setActiveTableNumber] = useState<number>(12);
+  const [activeTableNumber, setActiveTableNumber] = useState<number>(1);
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
   // Security Auth States

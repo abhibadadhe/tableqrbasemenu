@@ -40,7 +40,7 @@ export const GlobalNavbar: React.FC = () => {
                 fontWeight: '700'
               }}
             >
-              {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+              {Array.from({ length: currentRestaurant?.tablesCount || 20 }, (_, i) => i + 1).map((num) => (
                 <option key={num} value={num}>
                   Table {num}
                 </option>

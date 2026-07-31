@@ -8,7 +8,8 @@ export const QRStandeeGenerator: React.FC = () => {
   const [standeeColor, setStandeeColor] = useState<string>(currentRestaurant?.themeColor || '#ff5722');
   const standeeRef = useRef<HTMLDivElement>(null);
 
-  const menuUrl = `${window.location.origin}/?restaurant=${currentRestaurant?.slug || ''}&table=${activeTableNumber}`;
+  const restSlug = currentRestaurant?.slug || currentRestaurant?.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') || '';
+  const menuUrl = `${window.location.origin}/${restSlug}?table=${activeTableNumber || 1}`;
 
   const handlePrint = () => {
     window.print();
