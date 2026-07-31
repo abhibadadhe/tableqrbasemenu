@@ -18,6 +18,7 @@ export const SuperAdminPortal: React.FC = () => {
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [phone, setPhone] = useState('');
+  const [tablesCount, setTablesCount] = useState<number>(20);
   const [planId, setPlanId] = useState<'starter' | 'pro' | 'business'>('pro');
 
   const totalPlatformRevenue = restaurants.reduce((acc, curr) => acc + curr.totalRevenue, 0);
@@ -40,12 +41,13 @@ export const SuperAdminPortal: React.FC = () => {
       themeColor: '#ff5722',
       planId,
       status: 'active',
-      tablesCount: 20
+      tablesCount: Number(tablesCount) || 20
     });
 
     setName('');
     setTagline('');
     setPhone('');
+    setTablesCount(20);
     setShowAddTenantModal(false);
   };
 
@@ -332,6 +334,20 @@ export const SuperAdminPortal: React.FC = () => {
                   placeholder="+91 98765 00000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700' }}>Configured Tables Count:</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="200"
+                  required
+                  placeholder="20"
+                  value={tablesCount}
+                  onChange={(e) => setTablesCount(Number(e.target.value))}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
                 />
               </div>

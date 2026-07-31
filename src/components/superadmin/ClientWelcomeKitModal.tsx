@@ -10,8 +10,9 @@ interface ClientWelcomeKitModalProps {
 export const ClientWelcomeKitModal: React.FC<ClientWelcomeKitModalProps> = ({ restaurant, onClose }) => {
   const [copied, setCopied] = useState(false);
 
-  const adminUrl = `${window.location.origin}/?role=restaurant&id=${restaurant.id}`;
-  const menuUrl = `${window.location.origin}/?restaurant=${restaurant.slug}&table=1`;
+  const restSlug = restaurant.slug || restaurant.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const adminUrl = `${window.location.origin}/${restSlug}/login`;
+  const menuUrl = `${window.location.origin}/${restSlug}?table=1`;
 
   const kitText = `🎉 WELCOME TO TABLEQR PLATFORM!
 
