@@ -18,6 +18,7 @@ export const SuperAdminPortal: React.FC = () => {
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('123456');
   const [tablesCount, setTablesCount] = useState<number>(20);
   const [planId, setPlanId] = useState<'starter' | 'pro' | 'business'>('pro');
 
@@ -37,6 +38,7 @@ export const SuperAdminPortal: React.FC = () => {
       address: '100 Business Parkway, Central City',
       phone: phone || '+91 90000 00000',
       whatsapp: phone || '+91 90000 00000',
+      password: password || '123456',
       currency: '₹',
       themeColor: '#ff5722',
       planId,
@@ -47,6 +49,7 @@ export const SuperAdminPortal: React.FC = () => {
     setName('');
     setTagline('');
     setPhone('');
+    setPassword('123456');
     setTablesCount(20);
     setShowAddTenantModal(false);
   };
@@ -334,6 +337,18 @@ export const SuperAdminPortal: React.FC = () => {
                   placeholder="+91 98765 00000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700' }}>Admin Login Password / PIN:</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 123456 or cafe123"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: '10px', border: '1px solid var(--border-color)', marginTop: '4px' }}
                 />
               </div>

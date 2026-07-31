@@ -25,6 +25,7 @@ export interface Restaurant {
   address: string;
   phone: string;
   whatsapp: string;
+  password?: string;
   currency: string;
   themeColor: string;
   planId: 'starter' | 'pro' | 'business';

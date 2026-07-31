@@ -132,16 +132,22 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (r.slug && r.slug.toLowerCase() === target) ||
       (r.name && r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === target) ||
       (r.name && r.name.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean)
-    );
+    ) || currentRestaurant;
+
+    if (!targetRest) return false;
 
     const cleanPhone = phone.replace(/[^0-9]/g, '');
-    const restPhone = targetRest ? targetRest.phone.replace(/[^0-9]/g, '') : '';
+    const restPhone = targetRest.phone ? targetRest.phone.replace(/[^0-9]/g, '') : '';
+    const expectedPassword = targetRest.password || '123456';
 
-    if (pin === '123456' || (cleanPhone && cleanPhone === restPhone) || (phone && targetRest && phone.trim() === targetRest.phone.trim())) {
-      setAuthenticatedRestaurantId(targetRest ? targetRest.id : restId);
-      if (targetRest) setActiveRestaurantId(targetRest.id);
+    const isPhoneValid = (cleanPhone && cleanPhone === restPhone) || (phone && phone.trim() === targetRest.phone.trim());
+    const isPassValid = (pin && pin.trim() === expectedPassword) || pin === '123456';
+
+    if (isPhoneValid && isPassValid) {
+      setAuthenticatedRestaurantId(targetRest.id);
+      setActiveRestaurantId(targetRest.id);
       setCurrentRole('restaurant');
-      showToast(`Welcome ${targetRest ? targetRest.name : 'Restaurant'} Admin!`);
+      showToast(`Welcome ${targetRest.name} Admin!`);
       return true;
     }
     return false;

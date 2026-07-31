@@ -26,6 +26,7 @@ Configured Tables: ${restaurant.tablesCount} Tables
 🔑 RESTAURANT OWNER DASHBOARD LOGIN:
 Admin Portal: ${adminUrl}
 Login Phone: ${restaurant.phone}
+Password / Security PIN: ${restaurant.password || '123456'}
 Status: ACTIVE
 
 📱 CUSTOMER MOBILE MENU LINK:

@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { useSaaS } from '../../context/SaaSContext';
-import { Phone, KeyRound, ArrowRight, Store, Building2, AlertCircle } from 'lucide-react';
+import { Phone, KeyRound, ArrowRight, Store, AlertCircle } from 'lucide-react';
 
 export const RestaurantLoginModal: React.FC = () => {
-  const { restaurants, currentRestaurant, setActiveRestaurantId, loginRestaurant } = useSaaS();
+  const { restaurants, currentRestaurant, loginRestaurant } = useSaaS();
   
-  const [selectedRestId, setSelectedRestId] = useState<string>(
-    currentRestaurant?.id || (restaurants.length > 0 ? restaurants[0].id : '')
-  );
   const [phoneInput, setPhoneInput] = useState('');
   const [pinInput, setPinInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const targetRestaurant = restaurants.find(r => r.id === selectedRestId || r.slug === selectedRestId) || currentRestaurant || restaurants[0];
+  const targetRestaurant = currentRestaurant || (restaurants.length > 0 ? restaurants[0] : undefined);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +22,7 @@ export const RestaurantLoginModal: React.FC = () => {
 
     const success = loginRestaurant(targetRestaurant.id, phoneInput, pinInput);
     if (!success) {
-      setErrorMsg(`Invalid login. Use registered phone (${targetRestaurant.phone || 'your phone'}) or PIN: 123456`);
+      setErrorMsg(`Invalid credentials. Check registered Phone (${targetRestaurant.phone}) and Password / PIN.`);
     }
   };
 
@@ -60,7 +57,7 @@ export const RestaurantLoginModal: React.FC = () => {
             width: '64px',
             height: '64px',
             borderRadius: '50%',
-            background: 'var(--primary-light)',
+            background: 'rgba(255, 87, 34, 0.15)',
             color: 'var(--primary)',
             display: 'inline-flex',
             alignItems: 'center',
@@ -78,7 +75,7 @@ export const RestaurantLoginModal: React.FC = () => {
           Restaurant Management Portal Security Access
         </p>
 
-        {restaurants.length === 0 ? (
+        {!targetRestaurant ? (
           <div style={{
             background: 'rgba(239, 68, 68, 0.15)',
             border: '1px solid rgba(239, 68, 68, 0.3)',
@@ -93,9 +90,9 @@ export const RestaurantLoginModal: React.FC = () => {
           }}>
             <AlertCircle className="w-6 h-6 text-danger" style={{ color: '#ef4444', flexShrink: 0 }} />
             <div>
-              <strong>No Restaurants Onboarded Yet</strong>
+              <strong>No Restaurant Found</strong>
               <p style={{ fontSize: '0.8rem', marginTop: '4px', color: '#cbd5e1' }}>
-                Please log into the <strong>Super Admin Portal</strong> to onboard your restaurant (e.g. <em>cafe 11.11</em>).
+                Please log into the <strong>Super Admin Portal</strong> to onboard your restaurant.
               </p>
             </div>
           </div>
@@ -117,42 +114,14 @@ export const RestaurantLoginModal: React.FC = () => {
             )}
 
             <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', textAlign: 'left' }}>
-              {restaurants.length > 1 && (
-                <div>
-                  <label style={{ fontSize: '0.8rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#cbd5e1' }}>
-                    <Building2 className="w-4 h-4" /> Select Your Restaurant:
-                  </label>
-                  <select
-                    value={selectedRestId}
-                    onChange={(e) => {
-                      setSelectedRestId(e.target.value);
-                      setActiveRestaurantId(e.target.value);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '0.8rem 1rem',
-                      borderRadius: '12px',
-                      border: '1px solid #334155',
-                      background: '#0f172a',
-                      color: '#fff',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
-                  >
-                    {restaurants.map(r => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#cbd5e1' }}>
                   <Phone className="w-4 h-4" /> Registered Phone Number:
                 </label>
                 <input
                   type="text"
-                  placeholder={targetRestaurant?.phone || "e.g. 9028553395"}
+                  required
+                  placeholder={targetRestaurant.phone || "e.g. 9876543210"}
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
                   style={{
@@ -170,11 +139,12 @@ export const RestaurantLoginModal: React.FC = () => {
 
               <div>
                 <label style={{ fontSize: '0.8rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#cbd5e1' }}>
-                  <KeyRound className="w-4 h-4" /> Security PIN (Default: 123456):
+                  <KeyRound className="w-4 h-4" /> Admin Password / PIN:
                 </label>
                 <input
                   type="password"
-                  placeholder="123456"
+                  required
+                  placeholder="Enter your restaurant password"
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
                   style={{
