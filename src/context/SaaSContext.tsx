@@ -117,7 +117,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logoutSuperAdmin = () => {
     setIsSuperAdminAuthenticated(false);
-    setCurrentRole('landing');
+    setCurrentRole('superadmin');
     showToast('Super Admin Logged Out.');
   };
 
