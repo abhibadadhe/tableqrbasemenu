@@ -91,9 +91,13 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeTableNumber, setActiveTableNumber] = useState<number>(1);
   const [darkMode, setDarkMode] = useState<boolean>(false);
 
-  // Security Auth States
-  const [isSuperAdminAuthenticated, setIsSuperAdminAuthenticated] = useState<boolean>(false);
-  const [authenticatedRestaurantId, setAuthenticatedRestaurantId] = useState<string | null>(null);
+  // Security Auth States with LocalStorage Persistence
+  const [isSuperAdminAuthenticated, setIsSuperAdminAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('tableqr_superadmin_auth') === 'true';
+  });
+  const [authenticatedRestaurantId, setAuthenticatedRestaurantId] = useState<string | null>(() => {
+    return localStorage.getItem('tableqr_resto_auth_id') || null;
+  });
 
   const [plans] = useState<SubscriptionPlan[]>(INITIAL_PLANS);
   const [restaurants, setRestaurants] = useState<Restaurant[]>(INITIAL_RESTAURANTS);
@@ -113,6 +117,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginSuperAdmin = (email: string, pass: string): boolean => {
     if ((email.toLowerCase() === 'admin@tableqr.com' && pass === 'admin123') || pass === '123456' || email === 'admin') {
       setIsSuperAdminAuthenticated(true);
+      localStorage.setItem('tableqr_superadmin_auth', 'true');
       setCurrentRole('superadmin');
       showToast('🎉 Super Admin Authenticated!');
       return true;
@@ -122,7 +127,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logoutSuperAdmin = () => {
     setIsSuperAdminAuthenticated(false);
-    setCurrentRole('superadmin');
+    localStorage.removeItem('tableqr_superadmin_auth');
     showToast('Super Admin Logged Out.');
   };
 
@@ -180,6 +185,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (isPhoneValid && isPassValid) {
       setAuthenticatedRestaurantId(targetRest.id);
+      localStorage.setItem('tableqr_resto_auth_id', targetRest.id);
       setActiveRestaurantId(targetRest.id);
       setCurrentRole('restaurant');
       showToast(`Welcome ${targetRest.name} Admin!`);
@@ -192,6 +198,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logoutRestaurant = () => {
     setAuthenticatedRestaurantId(null);
+    localStorage.removeItem('tableqr_resto_auth_id');
     showToast('Logged out of Restaurant Portal.');
   };
 
