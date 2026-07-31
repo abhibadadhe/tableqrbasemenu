@@ -3,7 +3,7 @@ import { useSaaS } from '../../context/SaaSContext';
 import { QRStandeeGenerator } from './QRStandeeGenerator';
 import { RestaurantLoginModal } from '../auth/RestaurantLoginModal';
 import { OrderBillPrintModal } from './OrderBillPrintModal';
-import { Plus, Trash2, Pencil, ToggleLeft, ToggleRight, QrCode, Utensils, DollarSign, Clock, LogOut, Printer } from 'lucide-react';
+import { Plus, Trash2, Pencil, ToggleLeft, ToggleRight, QrCode, Utensils, DollarSign, Clock, LogOut, Printer, Calendar } from 'lucide-react';
 import type { MenuItem, Order } from '../../types';
 
 export const RestaurantAdminPortal: React.FC = () => {
@@ -32,14 +32,47 @@ export const RestaurantAdminPortal: React.FC = () => {
   const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
   const [newCatName, setNewCatName] = useState<string>('');
 
+  type TimeFilter = 'today' | 'month' | 'six_months' | 'year' | 'all';
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
+
+  const filterByTimeRange = (order: Order) => {
+    if (timeFilter === 'all') return true;
+    const orderDate = new Date(order.createdAt);
+    if (isNaN(orderDate.getTime())) return true;
+
+    const now = new Date();
+    if (timeFilter === 'today') {
+      return (
+        orderDate.getDate() === now.getDate() &&
+        orderDate.getMonth() === now.getMonth() &&
+        orderDate.getFullYear() === now.getFullYear()
+      );
+    }
+    if (timeFilter === 'month') {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return orderDate >= thirtyDaysAgo;
+    }
+    if (timeFilter === 'six_months') {
+      const sixMonthsAgo = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+      return orderDate >= sixMonthsAgo;
+    }
+    if (timeFilter === 'year') {
+      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      return orderDate >= oneYearAgo;
+    }
+    return true;
+  };
+
   const uniqueCategories = currentCategories.filter((c, index, self) =>
     index === self.findIndex(cat => cat.name.toLowerCase().trim() === c.name.toLowerCase().trim())
   );
 
   const restaurantOrders = orders.filter(o => o.restaurantId === currentRestaurant.id);
   const activeLiveOrders = restaurantOrders.filter(o => o.status !== 'completed');
-  const completedOrders = restaurantOrders.filter(o => o.status === 'completed');
-  const totalSalesRevenue = completedOrders.reduce((acc, curr) => acc + curr.totalAmount, 0);
+
+  const filteredOrdersForTime = restaurantOrders.filter(filterByTimeRange);
+  const completedFilteredOrders = filteredOrdersForTime.filter(o => o.status === 'completed');
+  const totalSalesRevenue = completedFilteredOrders.reduce((acc, curr) => acc + curr.totalAmount, 0);
 
   // Form State
   const [name, setName] = useState('');
@@ -190,6 +223,33 @@ export const RestaurantAdminPortal: React.FC = () => {
         </div>
       </div>
 
+      {/* Time Range Filter Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Calendar className="w-4 h-4 text-primary" style={{ color: 'var(--primary)' }} /> Revenue & Analytics Filter:
+        </div>
+        <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', background: 'var(--bg-card)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+          {(['today', 'month', 'six_months', 'year', 'all'] as const).map(tf => (
+            <button
+              key={tf}
+              onClick={() => setTimeFilter(tf)}
+              style={{
+                border: 'none',
+                padding: '4px 12px',
+                borderRadius: '8px',
+                fontWeight: '800',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                background: timeFilter === tf ? 'var(--primary)' : 'transparent',
+                color: timeFilter === tf ? '#fff' : 'var(--text-muted)'
+              }}
+            >
+              {tf === 'today' ? 'Today' : tf === 'month' ? 'This Month' : tf === 'six_months' ? '6 Months' : tf === 'year' ? 'This Year' : 'All Time'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Stats Row */}
       <div className="dashboard-grid">
         <div className="stat-card">
@@ -202,7 +262,7 @@ export const RestaurantAdminPortal: React.FC = () => {
         <div className="stat-card">
           <div className="stat-icon"><Clock /></div>
           <div>
-            <div className="stat-value">{restaurantOrders.length}</div>
+            <div className="stat-value">{filteredOrdersForTime.length}</div>
             <div className="stat-label">Total Orders Processed</div>
           </div>
         </div>

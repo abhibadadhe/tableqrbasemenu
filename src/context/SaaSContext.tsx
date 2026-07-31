@@ -330,7 +330,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'placed',
       paymentStatus: 'pending',
       customerName: `Guest (Table ${activeTableNumber})`,
-      createdAt: 'Just now'
+      createdAt: new Date().toISOString()
     };
 
     setOrders(prev => {

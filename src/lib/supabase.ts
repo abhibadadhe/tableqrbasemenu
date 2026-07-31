@@ -123,7 +123,7 @@ export async function fetchOrdersDB(): Promise<Order[]> {
     status: o.status,
     paymentStatus: o.payment_status,
     customerName: o.customer_name,
-    createdAt: new Date(o.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    createdAt: o.created_at || new Date().toISOString()
   }));
 }
 
