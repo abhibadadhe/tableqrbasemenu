@@ -34,6 +34,9 @@ export const RestaurantAdminPortal: React.FC = () => {
     index === self.findIndex(cat => cat.name.toLowerCase().trim() === c.name.toLowerCase().trim())
   );
 
+  const restaurantOrders = orders.filter(o => o.restaurantId === currentRestaurant.id);
+  const totalSalesRevenue = restaurantOrders.reduce((acc, curr) => acc + curr.totalAmount, 0);
+
   // Form State
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
@@ -195,14 +198,14 @@ export const RestaurantAdminPortal: React.FC = () => {
         <div className="stat-card">
           <div className="stat-icon"><Clock /></div>
           <div>
-            <div className="stat-value">{orders.length}</div>
+            <div className="stat-value">{restaurantOrders.length}</div>
             <div className="stat-label">Total Orders Processed</div>
           </div>
         </div>
         <div className="stat-card">
           <div className="stat-icon"><DollarSign /></div>
           <div>
-            <div className="stat-value">{currentRestaurant.currency}{currentRestaurant.totalRevenue.toLocaleString()}</div>
+            <div className="stat-value">{currentRestaurant.currency}{totalSalesRevenue.toLocaleString()}</div>
             <div className="stat-label">Total Sales Revenue</div>
           </div>
         </div>
