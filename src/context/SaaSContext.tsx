@@ -287,6 +287,20 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Auto-logout if current restaurant is deleted or suspended
+  useEffect(() => {
+    if (authenticatedRestaurantId) {
+      const rest = restaurants.find(r => r.id === authenticatedRestaurantId);
+      if (!rest) {
+        setAuthenticatedRestaurantId(null);
+        showToast('❌ Account deleted. Session terminated.');
+      } else if (rest.status === 'suspended') {
+        setAuthenticatedRestaurantId(null);
+        showToast('⚠️ Account suspended. Session terminated.');
+      }
+    }
+  }, [restaurants, authenticatedRestaurantId]);
+
   // Ultra Resilient Restaurant Matching
   const currentRestaurant = restaurants.find(r => {
     if (!activeRestaurantId) return false;
@@ -303,7 +317,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       rNameSlug === target ||
       rCleanName === targetClean
     );
-  }) || (restaurants.length > 0 ? restaurants[0] : undefined);
+  }) || (activeRestaurantId ? undefined : (restaurants.length > 0 ? restaurants[0] : undefined));
 
   const currentCategories = currentRestaurant ? categories.filter(c => c.restaurantId === currentRestaurant.id) : [];
   const currentMenuItems = currentRestaurant ? menuItems.filter(m => m.restaurantId === currentRestaurant.id) : [];

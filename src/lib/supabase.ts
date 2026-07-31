@@ -155,6 +155,10 @@ export async function updateTenantStatusDB(tenantId: string, status: Restaurant[
 
 export async function deleteTenantDB(tenantId: string) {
   if (!supabase) return;
+  await supabase.from('orders').delete().eq('tenant_id', tenantId);
+  await supabase.from('menu_items').delete().eq('tenant_id', tenantId);
+  await supabase.from('categories').delete().eq('tenant_id', tenantId);
+  await supabase.from('offers').delete().eq('tenant_id', tenantId);
   await supabase.from('tenants').delete().eq('id', tenantId);
 }
 
