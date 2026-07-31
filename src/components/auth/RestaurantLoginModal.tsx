@@ -3,13 +3,13 @@ import { useSaaS } from '../../context/SaaSContext';
 import { Phone, KeyRound, ArrowRight, Store, AlertCircle } from 'lucide-react';
 
 export const RestaurantLoginModal: React.FC = () => {
-  const { restaurants, currentRestaurant, loginRestaurant } = useSaaS();
+  const { restaurants, currentRestaurant, activeRestaurantId, loginRestaurant } = useSaaS();
   
   const [phoneInput, setPhoneInput] = useState('');
   const [pinInput, setPinInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const targetRestaurant = currentRestaurant || (restaurants.length > 0 ? restaurants[0] : undefined);
+  const targetRestaurant = currentRestaurant || (!activeRestaurantId && restaurants.length > 0 ? restaurants[0] : undefined);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,9 +91,11 @@ export const RestaurantLoginModal: React.FC = () => {
           }}>
             <AlertCircle className="w-6 h-6 text-danger" style={{ color: '#ef4444', flexShrink: 0 }} />
             <div>
-              <strong>No Restaurant Found</strong>
+              <strong>Restaurant Account Not Found or Deleted</strong>
               <p style={{ fontSize: '0.8rem', marginTop: '4px', color: '#cbd5e1' }}>
-                Please log into the <strong>Super Admin Portal</strong> to onboard your restaurant.
+                {activeRestaurantId 
+                  ? `The restaurant account "${activeRestaurantId}" does not exist or has been deleted. Access to this portal is disabled.` 
+                  : 'Please log into the Super Admin Portal to onboard your restaurant.'}
               </p>
             </div>
           </div>

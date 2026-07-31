@@ -131,36 +131,51 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const targetClean = target.replace(/[^a-z0-9]/g, '');
     const cleanPhoneInput = (phone || '').replace(/[^0-9]/g, '');
 
-    // 1. Find matching restaurant by ID, slug, name, or phone number
-    const targetRest = restaurants.find(r => {
-      const rId = (r.id || '').toLowerCase();
-      const rSlug = (r.slug || '').toLowerCase();
-      const rNameSlug = r.name ? r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
-      const rCleanName = r.name ? r.name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
-      const rPhone = (r.phone || '').replace(/[^0-9]/g, '');
-
-      return (
-        (target && (rId === target || rSlug === target || rNameSlug === target || rCleanName === targetClean)) ||
-        (cleanPhoneInput && rPhone === cleanPhoneInput)
-      );
-    });
-
-    if (!targetRest) {
-      showToast('❌ Restaurant account not found or has been deleted.');
+    if (!cleanPhoneInput || !pin) {
+      showToast('❌ Please enter your phone number and password.');
       return false;
     }
 
-    // 2. Check if suspended
+    let targetRest: Restaurant | undefined;
+
+    // If a specific hotel ID/slug is requested (e.g. cafe11/login)
+    if (target && target !== 'login') {
+      targetRest = restaurants.find(r => {
+        const rId = (r.id || '').toLowerCase();
+        const rSlug = (r.slug || '').toLowerCase();
+        const rNameSlug = r.name ? r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
+        const rCleanName = r.name ? r.name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+        return rId === target || rSlug === target || rNameSlug === target || rCleanName === targetClean;
+      });
+
+      if (!targetRest) {
+        showToast(`❌ Restaurant '${restId}' does not exist or has been deleted.`);
+        return false;
+      }
+    } else {
+      // Generic login: match by phone number
+      targetRest = restaurants.find(r => {
+        const rPhone = (r.phone || '').replace(/[^0-9]/g, '');
+        return cleanPhoneInput && rPhone === cleanPhoneInput;
+      });
+    }
+
+    if (!targetRest) {
+      showToast('❌ Account not found or has been deleted.');
+      return false;
+    }
+
+    // Check if suspended
     if (targetRest.status === 'suspended') {
       showToast('⚠️ Account SUSPENDED. Please contact Super Admin.');
       return false;
     }
 
-    // 3. Verify phone & password
+    // Verify phone & password for targetRest
     const restPhone = targetRest.phone ? targetRest.phone.replace(/[^0-9]/g, '') : '';
     const expectedPassword = targetRest.password || '123456';
 
-    const isPhoneValid = (cleanPhoneInput && cleanPhoneInput === restPhone) || (phone && phone.trim() === targetRest.phone.trim());
+    const isPhoneValid = cleanPhoneInput === restPhone || (phone && phone.trim() === targetRest.phone.trim());
     const isPassValid = (pin && pin.trim() === expectedPassword) || pin === '123456';
 
     if (isPhoneValid && isPassValid) {
@@ -171,7 +186,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
 
-    showToast('❌ Invalid phone number or password.');
+    showToast('❌ Invalid phone number or password for this restaurant.');
     return false;
   };
 
