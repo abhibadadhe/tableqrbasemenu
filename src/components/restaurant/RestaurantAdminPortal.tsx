@@ -35,6 +35,7 @@ export const RestaurantAdminPortal: React.FC = () => {
   );
 
   const restaurantOrders = orders.filter(o => o.restaurantId === currentRestaurant.id);
+  const activeLiveOrders = restaurantOrders.filter(o => o.status !== 'completed');
   const completedOrders = restaurantOrders.filter(o => o.status === 'completed');
   const totalSalesRevenue = completedOrders.reduce((acc, curr) => acc + curr.totalAmount, 0);
 
@@ -146,7 +147,7 @@ export const RestaurantAdminPortal: React.FC = () => {
               gap: '0.5rem'
             }}
           >
-            <Clock className="w-4 h-4" /> Live Orders ({orders.length})
+            <Clock className="w-4 h-4" /> Live Orders ({activeLiveOrders.length})
           </button>
           <button
             onClick={() => setActiveTab('qr')}
