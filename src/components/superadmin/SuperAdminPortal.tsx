@@ -6,7 +6,7 @@ import { SuperAdminLoginModal } from '../auth/SuperAdminLoginModal';
 import type { Restaurant } from '../../types';
 
 export const SuperAdminPortal: React.FC = () => {
-  const { restaurants, addRestaurantTenant, updateTenantStatus, deleteRestaurantTenant, setActiveRestaurantId, setCurrentRole, isSuperAdminAuthenticated } = useSaaS();
+  const { restaurants, orders, addRestaurantTenant, updateTenantStatus, deleteRestaurantTenant, setActiveRestaurantId, setCurrentRole, isSuperAdminAuthenticated } = useSaaS();
 
   if (!isSuperAdminAuthenticated) {
     return <SuperAdminLoginModal />;
@@ -22,8 +22,19 @@ export const SuperAdminPortal: React.FC = () => {
   const [tablesCount, setTablesCount] = useState<number>(20);
   const [planId, setPlanId] = useState<'starter' | 'pro' | 'business'>('pro');
 
-  const totalPlatformRevenue = restaurants.reduce((acc, curr) => acc + curr.totalRevenue, 0);
-  const totalOrders = restaurants.reduce((acc, curr) => acc + curr.totalOrdersCount, 0);
+  const PLAN_PRICES: Record<string, number> = {
+    starter: 1999,
+    pro: 6999,
+    business: 24999
+  };
+
+  // 1. SaaS Subscription Revenue from active onboarding plans
+  const saasMonthlyEarnings = restaurants
+    .filter(r => r.status === 'active')
+    .reduce((acc, curr) => acc + (PLAN_PRICES[curr.planId] || 6999), 0);
+
+  // 2. Total Orders across all platform restaurants
+  const totalPlatformOrders = orders.length;
 
   const handleCreateTenant = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +121,7 @@ export const SuperAdminPortal: React.FC = () => {
         <div className="stat-card">
           <div className="stat-icon"><DollarSign /></div>
           <div>
-            <div className="stat-value">₹{(totalPlatformRevenue * 0.15).toLocaleString()}</div>
+            <div className="stat-value">₹{saasMonthlyEarnings.toLocaleString()}</div>
             <div className="stat-label">Estimated SaaS Monthly Earnings</div>
           </div>
         </div>
@@ -118,7 +129,7 @@ export const SuperAdminPortal: React.FC = () => {
         <div className="stat-card">
           <div className="stat-icon"><TrendingUp /></div>
           <div>
-            <div className="stat-value">{totalOrders}</div>
+            <div className="stat-value">{totalPlatformOrders}</div>
             <div className="stat-label">Orders Processed Across Platform</div>
           </div>
         </div>
