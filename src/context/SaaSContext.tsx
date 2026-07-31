@@ -250,7 +250,10 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
             customerName: payload.new.customer_name,
             createdAt: 'Just now'
           };
-          setOrders((prev) => [newOrd, ...prev]);
+          setOrders((prev) => {
+            if (prev.some(o => o.id === newOrd.id)) return prev;
+            return [newOrd, ...prev];
+          });
           playKitchenOrderChime();
           showToast(`🔔 Realtime Order Received for Table ${newOrd.tableNumber}!`);
         })
@@ -329,7 +332,10 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: 'Just now'
     };
 
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders(prev => {
+      if (prev.some(o => o.id === newOrder.id)) return prev;
+      return [newOrder, ...prev];
+    });
     setCartItems([]);
     playKitchenOrderChime();
 
