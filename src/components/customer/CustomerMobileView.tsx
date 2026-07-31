@@ -33,6 +33,7 @@ export const CustomerMobileView: React.FC = () => {
   const [vegFilter, setVegFilter] = useState<'both' | 'veg' | 'nonveg'>('both');
   const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
   const [showOrdersModal, setShowOrdersModal] = useState<boolean>(false);
+  const [lastPlacedOrderId, setLastPlacedOrderId] = useState<string | null>(null);
 
   // Deduplicate categories by normalized name
   const uniqueCategories = currentCategories.filter((cat, index, self) =>
@@ -59,6 +60,7 @@ export const CustomerMobileView: React.FC = () => {
   const handleCheckout = () => {
     const newOrd = placeOrder();
     if (newOrd) {
+      setLastPlacedOrderId(newOrd.id);
       confetti({
         particleCount: 100,
         spread: 70,
@@ -428,7 +430,7 @@ export const CustomerMobileView: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
           padding: '1rem'
-        }} onClick={() => setShowOrdersModal(false)}>
+        }} onClick={() => { setShowOrdersModal(false); setLastPlacedOrderId(null); }}>
           <div style={{
             width: '100%',
             maxWidth: '420px',
@@ -441,12 +443,28 @@ export const CustomerMobileView: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: '800' }}>Table {activeTableNumber} Orders</h3>
               <button
-                onClick={() => setShowOrdersModal(false)}
+                onClick={() => { setShowOrdersModal(false); setLastPlacedOrderId(null); }}
                 style={{ border: 'none', background: 'var(--bg-subtle)', padding: '6px', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-main)' }}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {lastPlacedOrderId && (
+              <div style={{
+                background: 'rgba(46, 125, 50, 0.12)',
+                border: '1px solid rgba(46, 125, 50, 0.3)',
+                color: '#2e7d32',
+                padding: '0.75rem 1rem',
+                borderRadius: '16px',
+                marginBottom: '1rem',
+                textAlign: 'center',
+                fontWeight: '800',
+                fontSize: '0.85rem'
+              }}>
+                🎉 Order Sent to Kitchen! (#{lastPlacedOrderId})
+              </div>
+            )}
 
             {activeOrdersForTable.length === 0 ? (
               <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
@@ -454,27 +472,37 @@ export const CustomerMobileView: React.FC = () => {
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '350px', overflowY: 'auto' }}>
-                {activeOrdersForTable.map((ord) => (
-                  <div key={ord.id} style={{
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '16px',
-                    padding: '1rem',
-                    background: 'var(--bg-subtle)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <span style={{ fontWeight: '800', color: 'var(--primary)' }}>{ord.id}</span>
-                      <span style={{
-                        textTransform: 'uppercase',
-                        fontSize: '0.7rem',
-                        fontWeight: '800',
-                        padding: '2px 8px',
-                        borderRadius: '10px',
-                        background: ord.status === 'placed' ? '#fef3c7' : ord.status === 'preparing' ? '#dbeafe' : '#dcfce7',
-                        color: ord.status === 'placed' ? '#b45309' : ord.status === 'preparing' ? '#1d4ed8' : '#15803d'
-                      }}>
-                        {ord.status}
-                      </span>
-                    </div>
+                {activeOrdersForTable.map((ord) => {
+                  const isNewest = ord.id === lastPlacedOrderId;
+                  return (
+                    <div key={ord.id} style={{
+                      border: isNewest ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                      borderRadius: '16px',
+                      padding: '1rem',
+                      background: 'var(--bg-subtle)',
+                      boxShadow: isNewest ? '0 4px 15px rgba(255,87,34,0.15)' : 'none'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontWeight: '800', color: 'var(--primary)' }}>{ord.id}</span>
+                          {isNewest && (
+                            <span style={{ background: 'var(--primary)', color: '#fff', fontSize: '0.65rem', fontWeight: '800', padding: '1px 6px', borderRadius: '8px' }}>
+                              🔥 JUST PLACED
+                            </span>
+                          )}
+                        </div>
+                        <span style={{
+                          textTransform: 'uppercase',
+                          fontSize: '0.7rem',
+                          fontWeight: '800',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          background: ord.status === 'placed' ? '#fef3c7' : ord.status === 'preparing' ? '#dbeafe' : '#dcfce7',
+                          color: ord.status === 'placed' ? '#b45309' : ord.status === 'preparing' ? '#1d4ed8' : '#15803d'
+                        }}>
+                          {ord.status}
+                        </span>
+                      </div>
 
                     <div style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>
                       {ord.items.map((i, idx) => (
@@ -490,7 +518,8 @@ export const CustomerMobileView: React.FC = () => {
                       <span>{currentRestaurant.currency}{ord.totalAmount}</span>
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             )}
           </div>
