@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useSaaS } from '../../context/SaaSContext';
 import { QRStandeeGenerator } from './QRStandeeGenerator';
 import { RestaurantLoginModal } from '../auth/RestaurantLoginModal';
-import { Plus, Trash2, Pencil, ToggleLeft, ToggleRight, QrCode, Utensils, DollarSign, Clock, LogOut } from 'lucide-react';
-import type { MenuItem } from '../../types';
+import { OrderBillPrintModal } from './OrderBillPrintModal';
+import { Plus, Trash2, Pencil, ToggleLeft, ToggleRight, QrCode, Utensils, DollarSign, Clock, LogOut, Printer } from 'lucide-react';
+import type { MenuItem, Order } from '../../types';
 
 export const RestaurantAdminPortal: React.FC = () => {
   const {
@@ -28,6 +29,7 @@ export const RestaurantAdminPortal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'menu' | 'orders' | 'qr'>('menu');
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
+  const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
   const [newCatName, setNewCatName] = useState<string>('');
 
   const uniqueCategories = currentCategories.filter((c, index, self) =>
@@ -413,6 +415,28 @@ export const RestaurantAdminPortal: React.FC = () => {
                   <span>Total Payable:</span>
                   <span style={{ color: 'var(--primary)' }}>{currentRestaurant.currency}{ord.totalAmount}</span>
                 </div>
+
+                <button
+                  onClick={() => setPrintingOrder(ord)}
+                  style={{
+                    marginTop: '0.75rem',
+                    width: '100%',
+                    padding: '0.5rem',
+                    borderRadius: '10px',
+                    border: '1px solid var(--primary)',
+                    background: 'rgba(255, 87, 34, 0.08)',
+                    color: 'var(--primary)',
+                    fontWeight: '800',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Printer className="w-4 h-4" /> Print Receipt / Bill
+                </button>
               </div>
             ))}
           </div>
@@ -547,6 +571,14 @@ export const RestaurantAdminPortal: React.FC = () => {
             updateMenuItem(updated);
             setEditingDish(null);
           }}
+        />
+      )}
+      {/* Thermal Bill Print Modal */}
+      {printingOrder && (
+        <OrderBillPrintModal
+          order={printingOrder}
+          restaurant={currentRestaurant}
+          onClose={() => setPrintingOrder(null)}
         />
       )}
     </div>
