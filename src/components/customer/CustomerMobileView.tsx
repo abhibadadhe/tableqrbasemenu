@@ -54,7 +54,7 @@ export const CustomerMobileView: React.FC = () => {
   const cartTotalCount = cartItems.reduce((acc, curr) => acc + curr.quantity, 0);
   const cartTotalAmount = cartItems.reduce((acc, curr) => acc + (curr.menuItem.price * curr.quantity), 0);
   const activeOrdersForTable = orders
-    .filter(o => o.tableNumber === activeTableNumber)
+    .filter(o => o.tableNumber === activeTableNumber && o.status !== 'completed')
     .filter((o, index, self) => index === self.findIndex(item => item.id === o.id));
 
   const handleCheckout = () => {
