@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSaaS } from '../../context/SaaSContext';
-import { QrCode, ShieldCheck, Store, Sparkles, Database, LogOut } from 'lucide-react';
+import { QrCode, ShieldCheck, Sparkles, Database, LogOut, Store } from 'lucide-react';
 
 export const GlobalNavbar: React.FC = () => {
   const {
@@ -95,7 +95,56 @@ export const GlobalNavbar: React.FC = () => {
     );
   }
 
-  // 3. SaaS Landing & Super Admin View
+  // 3. Super Admin View (when on /superadmin route)
+  if (currentRole === 'superadmin') {
+    return (
+      <header className="global-nav">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="brand-logo" onClick={() => setCurrentRole('landing')}>
+            <QrCode className="w-6 h-6 text-primary" style={{ color: 'var(--primary)' }} />
+            <span>Table</span>QR
+          </div>
+
+          <span style={{
+            background: 'rgba(255, 87, 34, 0.15)',
+            color: 'var(--primary)',
+            border: '1px solid rgba(255, 87, 34, 0.3)',
+            padding: '4px 12px',
+            borderRadius: '20px',
+            fontSize: '0.8rem',
+            fontWeight: '800',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <ShieldCheck className="w-4 h-4" /> Super Admin Control Center
+          </span>
+        </div>
+
+        <nav className="role-switcher">
+          <button
+            className="role-btn"
+            onClick={() => setCurrentRole('landing')}
+          >
+            <Sparkles className="w-4 h-4" />
+            SaaS Pitch
+          </button>
+
+          {isSuperAdminAuthenticated && (
+            <button
+              className="role-btn"
+              onClick={logoutSuperAdmin}
+              style={{ color: '#fca5a5', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+            >
+              <LogOut className="w-4 h-4" /> Logout Admin
+            </button>
+          )}
+        </nav>
+      </header>
+    );
+  }
+
+  // 4. Public SaaS Landing Homepage (Clean - No Super Admin tab!)
   return (
     <header className="global-nav">
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -124,30 +173,12 @@ export const GlobalNavbar: React.FC = () => {
 
       <nav className="role-switcher">
         <button
-          className={`role-btn ${currentRole === 'landing' ? 'active' : ''}`}
+          className="role-btn active"
           onClick={() => setCurrentRole('landing')}
         >
           <Sparkles className="w-4 h-4" />
           SaaS Pitch
         </button>
-
-        <button
-          className={`role-btn ${currentRole === 'superadmin' ? 'active' : ''}`}
-          onClick={() => setCurrentRole('superadmin')}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          Super Admin {isSuperAdminAuthenticated && '(Active)'}
-        </button>
-
-        {isSuperAdminAuthenticated && (
-          <button
-            className="role-btn"
-            onClick={logoutSuperAdmin}
-            style={{ color: '#fca5a5' }}
-          >
-            <LogOut className="w-4 h-4" /> Logout Admin
-          </button>
-        )}
       </nav>
     </header>
   );
