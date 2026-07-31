@@ -122,12 +122,16 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginRestaurant = (restId: string, phone: string, pin: string): boolean => {
+    const target = (restId || '').toLowerCase().trim();
+    const targetClean = target.replace(/[^a-z0-9]/g, '');
+
     const targetRest = restaurants.find(r => 
-      r.id === restId || 
-      r.slug === restId || 
-      r.slug.toLowerCase() === restId.toLowerCase() ||
-      r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === restId.toLowerCase()
+      r.id.toLowerCase() === target ||
+      (r.slug && r.slug.toLowerCase() === target) ||
+      (r.name && r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === target) ||
+      (r.name && r.name.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean)
     );
+
     const cleanPhone = phone.replace(/[^0-9]/g, '');
     const restPhone = targetRest ? targetRest.phone.replace(/[^0-9]/g, '') : '';
 
@@ -188,11 +192,13 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const params = new URLSearchParams(window.location.search);
           const targetParam = params.get('id') || params.get('restaurant');
           if (targetParam) {
+            const target = targetParam.toLowerCase().trim();
+            const targetClean = target.replace(/[^a-z0-9]/g, '');
             const found = dbTenants.find(t => 
-              t.id === targetParam || 
-              t.slug === targetParam || 
-              t.slug.toLowerCase() === targetParam.toLowerCase() ||
-              t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === targetParam.toLowerCase()
+              t.id.toLowerCase() === target || 
+              (t.slug && t.slug.toLowerCase() === target) ||
+              (t.name && t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === target) ||
+              (t.name && t.name.toLowerCase().replace(/[^a-z0-9]/g, '') === targetClean)
             );
             if (found) setActiveRestaurantId(found.id);
             else setActiveRestaurantId(targetParam);
@@ -237,13 +243,23 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Robust Restaurant Matching by ID, Slug, or Normalized Name
-  const currentRestaurant = restaurants.find(r => 
-    r.id === activeRestaurantId || 
-    r.slug === activeRestaurantId || 
-    r.slug.toLowerCase() === activeRestaurantId.toLowerCase() ||
-    r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === activeRestaurantId.toLowerCase()
-  ) || restaurants[0];
+  // Ultra Resilient Restaurant Matching
+  const currentRestaurant = restaurants.find(r => {
+    if (!activeRestaurantId) return false;
+    const target = activeRestaurantId.toLowerCase().trim();
+    const targetClean = target.replace(/[^a-z0-9]/g, '');
+    const rId = r.id ? r.id.toLowerCase() : '';
+    const rSlug = r.slug ? r.slug.toLowerCase() : '';
+    const rNameSlug = r.name ? r.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : '';
+    const rCleanName = r.name ? r.name.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+
+    return (
+      rId === target ||
+      rSlug === target ||
+      rNameSlug === target ||
+      rCleanName === targetClean
+    );
+  }) || (restaurants.length > 0 ? restaurants[0] : undefined);
 
   const currentCategories = currentRestaurant ? categories.filter(c => c.restaurantId === currentRestaurant.id) : [];
   const currentMenuItems = currentRestaurant ? menuItems.filter(m => m.restaurantId === currentRestaurant.id) : [];
@@ -362,7 +378,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Super Admin Actions
-  const addRestaurantTenant = (newRest: Omit<Restaurant, 'id' | 'totalOrdersCount' | 'totalRevenue' | 'createdAt'>) => {
+  const addRestaurantTenant = async (newRest: Omit<Restaurant, 'id' | 'totalOrdersCount' | 'totalRevenue' | 'createdAt'>) => {
     const created: Restaurant = {
       ...newRest,
       id: `rest-${Date.now()}`,
@@ -371,7 +387,9 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString().split('T')[0]
     };
     setRestaurants(prev => [...prev, created]);
-    if (isSupabaseConfigured) createTenantDB(created);
+    if (isSupabaseConfigured) {
+      await createTenantDB(created);
+    }
     showToast(`New tenant "${created.name}" onboarded to Supabase DB!`);
   };
 
